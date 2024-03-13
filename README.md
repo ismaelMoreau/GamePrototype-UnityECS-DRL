@@ -25,7 +25,7 @@ Le jeu sera jouable directement depuis Unity une fois le projet cloné et config
 Ce projet est développé dans le cadre d'un stage. Toutes contributions ou feedbacks sont les bienvenus via les issues GitHub ou pull requests.
 
 ## Licence
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails. Il y aura un changement de license avant le 26 juin 
+Ce projet est sans licence. Il y aura un ajout de license avant le 26 juin 
 
 
 ## Contact

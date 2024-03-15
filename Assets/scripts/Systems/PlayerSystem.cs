@@ -28,7 +28,8 @@ public partial struct PlayerSystem : ISystem
                 clickPosition = new float3(hit.point.x, hit.point.y, 0);
             }
         }
-        foreach ((RefRW<LocalTransform> localTransform, RefRO<PlayerMovementComponent> playerSpeed, RefRW<PlayerTargetPosition> targetPosition) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerMovementComponent>, RefRW<PlayerTargetPosition>>())
+        foreach ((RefRW<LocalTransform> localTransform, RefRO<PlayerMovementComponent> playerSpeed, RefRW<PlayerTargetPosition> targetPosition) 
+            in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerMovementComponent>, RefRW<PlayerTargetPosition>>())
         {
             if (clickPosition.HasValue)
             {

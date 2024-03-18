@@ -6,6 +6,8 @@ public class EnemyAuthoring : MonoBehaviour
 {
     public float health = 100f;
     public float speed = 2f;
+
+    public bool isDead= false;
     // Add other fields as necessary
 
     // The Baker class is responsible for converting the authoring component into ECS components
@@ -23,7 +25,7 @@ public class EnemyAuthoring : MonoBehaviour
                 speed = authoring.speed
                 // Map other fields accordingly
             });
-
+        
             // You can also add other components here, such as components for rendering, physics, etc.
         }
     }
@@ -33,4 +35,7 @@ public struct EnemyComponent : IComponentData
     public float health;
     public float speed;
     // Add other enemy attributes here
+}
+public struct DestroyTag : IComponentData { 
+  
 }

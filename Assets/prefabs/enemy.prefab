@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   health: 100
   speed: 2
+  isDead: 0
 --- !u!212 &4363704265262442622
 SpriteRenderer:
   m_ObjectHideFlags: 0

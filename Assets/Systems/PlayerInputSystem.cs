@@ -24,7 +24,7 @@ public partial struct PlayerInputSystem : ISystem
         }
 
        
-        float3? clickPosition = null;
+        var targetClickPosition = SystemAPI.GetSingletonRW<PlayerTargetPosition>();
    
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (Input.GetMouseButtonDown(0)) // 0 is for the left button
@@ -33,27 +33,21 @@ public partial struct PlayerInputSystem : ISystem
             if (new Plane(Vector3.up, 0f).Raycast(ray, out var dist))
             {
                 // Store the new target position in 3D
-                clickPosition = ray.GetPoint(dist);
+                targetClickPosition.ValueRW.targetClickPosition = ray.GetPoint(dist);
             }
         }
-      
-        foreach ((RefRW<LocalTransform> localTransform, RefRO<PlayerMovementComponent> playerSpeed, RefRW<PlayerTargetPosition> targetPosition,Entity e) 
-                 in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerMovementComponent>, RefRW<PlayerTargetPosition>>().WithEntityAccess())
+             
+        if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            if (clickPosition.HasValue)
+            Ray ray2 = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (new Plane(Vector3.up, 0f).Raycast(ray2, out var dist2))
             {
-                targetPosition.ValueRW.targetClickPosition = clickPosition.Value;
+                // Store the new target position in 3D
+                targetClickPosition.ValueRW.targetMousePosition = ray2.GetPoint(dist2);
             }
             
-            float3 currentPosition = localTransform.ValueRW.Position; // Assuming LocalTransform has a Value with a Position
-            float3 direction = math.normalize(targetPosition.ValueRO.targetClickPosition - currentPosition);
-
-            // Update the position only if the target is not reached
-            // Check for all components including Z to ensure we're working in 3D
-            if (!math.all(math.abs(currentPosition - targetPosition.ValueRO.targetClickPosition) < new float3(0.05f, 0.05f, 0.05f)))
-            {
-                localTransform.ValueRW.Position += direction * playerSpeed.ValueRO.speed * SystemAPI.Time.DeltaTime;
-            }
         }
+      
+      
     }
 }

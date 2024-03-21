@@ -7,9 +7,7 @@ using Unity.Mathematics;
 public class PlayerAuthoring : MonoBehaviour
 {
     public float initialSpeed = 5f;
-    public float3 targetClickPosition;
 
-    public GameObject Prefab;
     private class Baker : Baker<PlayerAuthoring>{
       public override void Bake(PlayerAuthoring authoring)
         {
@@ -18,8 +16,7 @@ public class PlayerAuthoring : MonoBehaviour
               speed = authoring.initialSpeed
           });
           AddComponent(entity ,new PlayerTargetPosition{
-              targetClickPosition = authoring.targetClickPosition,
-              PrefabOfATarget = GetEntity(authoring.Prefab, TransformUsageFlags.Dynamic),
+              
           });
         }
     }
@@ -32,5 +29,7 @@ public struct PlayerMovementComponent : IComponentData
 public struct PlayerTargetPosition : IComponentData
 {
     public float3 targetClickPosition;
-    public Entity PrefabOfATarget;
+
+    public float3 targetMousePosition;
+    public bool isInMouvement;
 }

@@ -98,11 +98,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initialSpeed: 5
-  targetClickPosition:
-    x: 0
-    y: 0
-    z: 0
-  Prefab: {fileID: 7176448165504254025, guid: eee917bdfb2320cebbfe08f0036db6f4, type: 3}
+  targetPrefab: {fileID: 2996822614659895864, guid: 1fae42a108bc98746997c039b9c2f5ba,
+    type: 3}
 --- !u!65 &7316625006639578566
 BoxCollider:
   m_ObjectHideFlags: 0

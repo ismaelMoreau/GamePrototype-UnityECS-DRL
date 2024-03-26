@@ -17,11 +17,11 @@ public partial struct DestructionSystem : ISystem
     {
         //EntityQuery query = GetEntityQuery(ComponentType.ReadOnly<DestroyTag>());
         EntityQuery query = SystemAPI.QueryBuilder().WithAll<DestroyTag>().Build();
-        // EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
-        // ecb.DestroyEntity(query,EntityQueryCaptureMode.AtPlayback);
-        // ecb.Playback(state.EntityManager);
-        state.EntityManager.DestroyEntity(query);
+        EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+        ecb.DestroyEntity(query,EntityQueryCaptureMode.AtPlayback);
+        ecb.Playback(state.EntityManager);
+        //state.EntityManager.DestroyEntity(query);
         // You are responsible for disposing of any ECB you create.
-        //ecb.Dispose();
+        ecb.Dispose();
     }
 }

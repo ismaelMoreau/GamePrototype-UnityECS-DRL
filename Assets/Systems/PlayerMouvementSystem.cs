@@ -26,18 +26,24 @@ public partial struct PlayerMouvementSystem : ISystem
         // priorMousePositionAfterButtonPress.targetClickPosition = PlayerTargetPosition.targetClickPosition;
         
       
-        foreach ((RefRW<LocalTransform> localTransform, RefRO<PlayerMovementComponent> playerSpeed, RefRW<PlayerTargetPosition> targetPosition) 
+        foreach ((RefRW<LocalTransform> localTransform, RefRO<PlayerMovementComponent> player, RefRW<PlayerTargetPosition> targetPosition) 
                  in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerMovementComponent>, RefRW<PlayerTargetPosition>>())
         {     
             float3 currentPosition = localTransform.ValueRW.Position; // Assuming LocalTransform has a Value with a Position
             float3 direction = math.normalize(targetPosition.ValueRO.targetClickPosition - currentPosition);
 
+            if (!player.ValueRO.isGrounded)
+            {
+                break; // Skip this entity if it's not grounded
+            }
+
             // Update the position only if the target is not reached
             // Check for all components including Z to ensure we're working in 3D
-            if (!math.all(math.abs(currentPosition - targetPosition.ValueRO.targetClickPosition) < new float3(0.05f, 0.05f, 0.05f)))
+            if (!math.all(math.abs(currentPosition - targetPosition.ValueRO.targetClickPosition) < new float3(1.5f, 1.5f, 1.5f)))
             {
-                localTransform.ValueRW.Position += direction * playerSpeed.ValueRO.speed * SystemAPI.Time.DeltaTime;
+                localTransform.ValueRW.Position += direction * player.ValueRO.speed * SystemAPI.Time.DeltaTime;
             }
+            
         }
     }
 }

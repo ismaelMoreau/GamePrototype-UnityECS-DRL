@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7411880790664701134}
   - component: {fileID: 1055919949027176432}
   - component: {fileID: 7316625006639578566}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,6 +100,7 @@ MonoBehaviour:
   initialSpeed: 5
   targetPrefab: {fileID: 2996822614659895864, guid: 1fae42a108bc98746997c039b9c2f5ba,
     type: 3}
+  isGrounded: 1
 --- !u!65 &7316625006639578566
 BoxCollider:
   m_ObjectHideFlags: 0

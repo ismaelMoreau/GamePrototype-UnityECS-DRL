@@ -23,22 +23,21 @@ public partial struct EnemyMovementSystem : ISystem
         {
             playerPosition = localTransform.ValueRO.Position; 
         }
-
+       
         // Schedule the job
         var job = new EnemyMoveTowardsPlayerJob
         {
             PlayerPosition = playerPosition,
             DeltaTime = SystemAPI.Time.DeltaTime,
-            CollisionRadius = 1.0f, // Define your collision radius
-            CommandBuffer = ecb.AsParallelWriter()
+            //CollisionRadius = 1.0f, // Define your collision radius
+            
         };
         
         
         state.Dependency = job.Schedule(state.Dependency);
         state.Dependency.Complete();
 
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
+     
     }
 }
 // Job to move enemies towards the player
@@ -46,21 +45,17 @@ public partial struct EnemyMoveTowardsPlayerJob : IJobEntity
 {
     public float3 PlayerPosition;
     public float DeltaTime;
-    public float CollisionRadius;
+    //public float CollisionRadius;
 
     //[NativeDisableParallelForRestriction]
-    internal EntityCommandBuffer.ParallelWriter CommandBuffer; 
+    public EntityCommandBuffer.ParallelWriter CommandBuffer; 
 
     public void Execute(Entity entity,[ChunkIndexInQuery]int index, ref LocalTransform localTransform, in EnemyComponent enemy)
     {
         float3 direction = math.normalize(PlayerPosition - localTransform.Position);
         float distance = math.distance(PlayerPosition, localTransform.Position);
         localTransform.Position += direction * enemy.speed * DeltaTime;
-
-        if (distance < CollisionRadius)
-        {
-            // Instead of destroying directly, mark for later destruction
-            CommandBuffer.AddComponent<DestroyTag>(index, entity);
-        }
+      
+       
     }
 } 

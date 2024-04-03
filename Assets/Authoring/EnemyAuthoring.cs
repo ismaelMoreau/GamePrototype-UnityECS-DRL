@@ -25,7 +25,8 @@ public class EnemyAuthoring : MonoBehaviour
                 speed = authoring.speed,
                 // Map other fields accordingly
             });
-        
+            AddComponent(entity,new DestroyTag{});
+            SetComponentEnabled<DestroyTag>(entity, false);
             // You can also add other components here, such as components for rendering, physics, etc.
         }
     }
@@ -35,6 +36,7 @@ public struct EnemyComponent : IComponentData
     public float health;
     public float speed;
 }
-public struct DestroyTag : IComponentData { 
+
+public struct DestroyTag : IComponentData ,IEnableableComponent{ 
   
 }

@@ -66,25 +66,27 @@ public partial struct AOESkillSystem : ISystem
         ApplyAOEAction(ref state, playerTargetPosition.targetMousePosition, skillsConfig.EffectRadius, AOEAction.Destroy);
         
         
-        EntityQuery query = SystemAPI.QueryBuilder().WithAll<Target>().Build();
-        EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
-        ecb.DestroyEntity(query,EntityQueryCaptureMode.AtPlayback);
-        ecb.Playback(state.EntityManager);
+        //EntityQuery query = SystemAPI.QueryBuilder().WithAll<Target>().Build();
+        //EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+        state.EntityManager.DestroyEntity(targetPrefab);
+        //ecb.Playback(state.EntityManager);
         //state.EntityManager.DestroyEntity(query);
         // You are responsible for disposing of any ECB you create.
-        ecb.Dispose();
+        //ecb.Dispose();
         
         //state.EntityManager.DestroyEntity(aoePrefab);
         //state.EntityManager.DestroyEntity(targetPrefab);
         
       
     }
+    
+    [BurstCompile]
     public void ApplyAOEAction(ref SystemState state, float3 aoePosition, float effectRadius, AOEAction action)
     {
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
 
-        foreach ((RefRO<LocalTransform> localTransform, RefRW<EnemyComponent> enemy, Entity entity)
-                    in SystemAPI.Query<RefRO<LocalTransform>, RefRW<EnemyComponent>>().WithEntityAccess())
+        foreach ((RefRO<LocalTransform> localTransform, RefRW<EnemyComponent> enemy ,RefRW<URPMaterialPropertyBaseColor> color, Entity entity)
+                    in SystemAPI.Query<RefRO<LocalTransform>, RefRW<EnemyComponent>,RefRW<URPMaterialPropertyBaseColor>>().WithEntityAccess())
         {
             float distance = math.distance(localTransform.ValueRO.Position, aoePosition);
           
@@ -94,24 +96,22 @@ public partial struct AOESkillSystem : ISystem
                 {
                     case AOEAction.Destroy:
 
-                        ecb.AddComponent<DestroyTag>(entity);
+                        state.EntityManager.SetComponentEnabled<DestroyTag>(entity,true);
                         
                         break;
                     case AOEAction.ChangeColor:
                         // Assuming you have a component for color, e.g., EnemyColor
                        
-                        ecb.SetComponent(entity , new URPMaterialPropertyBaseColor { Value = (Vector4)Color.red });
+                        color.ValueRW.Value = (Vector4)Color.red;
                         break;
                 }
             }else{
                 if(action == AOEAction.ChangeColor ){
-                    ecb.SetComponent(entity , new URPMaterialPropertyBaseColor { Value = (Vector4)Color.black });
+                    color.ValueRW.Value = (Vector4)Color.black;
                 }
             }
         }
 
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
     }
     public enum AOEAction
     {

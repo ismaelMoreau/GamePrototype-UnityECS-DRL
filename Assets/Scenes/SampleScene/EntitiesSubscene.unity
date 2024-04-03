@@ -134,7 +134,7 @@ PrefabInstance:
     - target: {fileID: 2443699031488655080, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
       propertyPath: SpawnRate
-      value: 0.1
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6697415168630587217, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
@@ -364,7 +364,7 @@ PrefabInstance:
     - target: {fileID: 2443699031488655080, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
       propertyPath: SpawnRate
-      value: 0.2
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6697415168630587217, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
@@ -478,7 +478,7 @@ PrefabInstance:
     - target: {fileID: 2957763509913395555, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 4.29
       objectReference: {fileID: 0}
     - target: {fileID: 2957763509913395555, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}

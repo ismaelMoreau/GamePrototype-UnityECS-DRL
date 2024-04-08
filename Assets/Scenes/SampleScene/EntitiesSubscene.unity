@@ -154,7 +154,7 @@ PrefabInstance:
     - target: {fileID: 7968710003751557141, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 11.4
+      value: 26.9
       objectReference: {fileID: 0}
     - target: {fileID: 7968710003751557141, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
@@ -202,6 +202,50 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 6100048957920222147}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1216090730
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1216090732}
+  - component: {fileID: 1216090731}
+  m_Layer: 0
+  m_Name: QlearningConfig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1216090731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1216090730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e5e545ba559b58ddbe62456cfe2e04d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1216090732
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1216090730}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.0749286, y: 2.8819847, z: 0.82357925}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1822545494 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2558816316663948117, guid: 6a90b3096112e34aa9213d30ab7b6685,
@@ -364,7 +408,7 @@ PrefabInstance:
     - target: {fileID: 2443699031488655080, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
       propertyPath: SpawnRate
-      value: 2
+      value: 1000000
       objectReference: {fileID: 0}
     - target: {fileID: 6697415168630587217, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
@@ -488,7 +532,7 @@ PrefabInstance:
     - target: {fileID: 2957763509913395555, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -8.6
       objectReference: {fileID: 0}
     - target: {fileID: 2957763509913395555, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
@@ -618,8 +662,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
         type: 3}
+      propertyPath: alpha
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
+        type: 3}
+      propertyPath: gamma
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
+        type: 3}
       propertyPath: Damage
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
+        type: 3}
+      propertyPath: epsilon
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
         type: 3}
@@ -655,3 +714,4 @@ SceneRoots:
   - {fileID: 8614192590197546290}
   - {fileID: 245928624}
   - {fileID: 2134222719}
+  - {fileID: 1216090732}

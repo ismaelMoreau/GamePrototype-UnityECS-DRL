@@ -34,29 +34,27 @@ using Unity.VisualScripting;
                 if (!initialized)
                 {
                     initialized = true;
-                }else{
-                    configManaged.UIController.ClearTable();
-                }
-                configManaged.UIController = GameObject.FindObjectOfType<UIController>();
-                configManaged.UIController.GenerateTable();
-                int index = 0;
-                foreach(var Qtable in SystemAPI.Query<RefRO<QtableComponent>>()){
-                    configManaged.UIController.SetCellContentFlat(index,index.ToString()+": "+ Qtable.ValueRO.up.ToString("F2")+"/"+
-                    Qtable.ValueRO.down.ToString("F2")+"/"+
-                    Qtable.ValueRO.right.ToString("F2")+"/"+
-                    Qtable.ValueRO.left.ToString("F2"));
-                    index++;
-                }
+               
                 
+                    configManaged.UIController = GameObject.FindObjectOfType<UIController>();
+                    configManaged.UIController.GenerateTable();
+                    int index = 0;
+                    foreach(var Qtable in SystemAPI.Query<RefRO<QtableComponent>>()){
+                        configManaged.UIController.SetCellContentFlat(index,index.ToString()+": "+ Qtable.ValueRO.up.ToString("F2")+"/"+
+                        Qtable.ValueRO.down.ToString("F2")+"/"+
+                        Qtable.ValueRO.right.ToString("F2")+"/"+
+                        Qtable.ValueRO.left.ToString("F2"));
+                        index++;
+                    }
+                }
             }
             else if (Input.GetKey(KeyCode.Q)){
                 
                 if (!initialized)
                 {
                     initialized = true;
-                }else{
-                    configManaged.UIController.ClearTable();
-                }
+               
+                
                     configManaged.UIController = GameObject.FindObjectOfType<UIController>();
                     configManaged.UIController.GenerateTable();
                     int index = 0;
@@ -64,6 +62,7 @@ using Unity.VisualScripting;
                         configManaged.UIController.SetCellContentFlat(index, Qtable.ValueRO.reward.ToString());
                         index++;
                     }
+                }
                 
             }
             else if (Input.GetKey(KeyCode.D)){

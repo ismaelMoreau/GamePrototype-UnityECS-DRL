@@ -1,42 +1,3 @@
-// using Unity.Entities;
-// using Unity.Mathematics;
-// using Unity.Transforms;
-// using UnityEngine;
-// using Unity.Collections;
-// using Unity.Burst;
-
-// public partial struct QlearningSystem : ISystem
-// {
-    
-//     [BurstCompile]    
-//     public void OnCreate(ref SystemState state){
-//         state.RequireForUpdate<QtableComponent>();
-//         for (int x = 0; x < 20; x++)
-//         {
-//             for (int y = 0; y < 20; y++)
-//             {
-//                 state.EntityManager.AddComponent<QtableComponent>(state.SystemHandle);
-//             }
-//         }
-//         foreach(var Qtable  in SystemAPI.Query<RefRW<QtableComponent>>()){
-//            Qtable.ValueRW.up = 0;
-//            Qtable.ValueRW.down = 0;
-//            Qtable.ValueRW.left = 0;
-//            Qtable.ValueRW.right = 0;
-//         }
-//     }
-//     [BurstCompile]
-//     public void OnUpdate(ref SystemState state)
-//     {
-//     //     SystemAPI.SetComponent(state.SystemHandle, new PlayerInputData {
-//     //         AxisX = [...read controller data],
-//     //         AxisY = [...read controller data]
-//     //     });
-//         foreach(var Qtable  in SystemAPI.Query<RefRW<QtableComponent>>()){
-            
-//         }
-//     }
-// }
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -46,6 +7,7 @@ using Unity.Burst;
 using Random= Unity.Mathematics.Random;
 using Unity.VisualScripting;
 using Unity.Scenes;
+using System.Threading.Tasks;
 
 [UpdateAfter(typeof(EnemyMovementSystem))]
 public partial struct QlearningSystem : ISystem
@@ -57,12 +19,12 @@ public partial struct QlearningSystem : ISystem
         //var gridconfig =  SystemAPI.GetSingleton<ConfigQlearnGrid>();
         random = new Random(123);
        
-        int centerX = 10;
-        int centerZ = 10;
-        
+        int centerX = 9;
+        int centerZ = 9;
+        int regionSize = 1; 
         float maxDistance = math.abs(centerX - 0) + math.abs(centerZ - 0);
         
-        float maxReward = 10.0f; // Maximum reward at the center
+        float maxReward = 0f; // Maximum reward at the center
         float minReward = 0f; 
 
         for (int x = 0; x < 20; x++)
@@ -77,7 +39,10 @@ public partial struct QlearningSystem : ISystem
                 
                 
                 float reward = minReward + (maxReward - minReward) * ((float)(maxDistance - distanceFromCenter) / maxDistance);
-                
+                 if (x >= (centerX - regionSize) && x <= (centerX + regionSize) && 
+                    z >= (centerZ - regionSize) && z <= (centerZ + regionSize)) {
+                    reward = 1000f; // Set reward to 100 for cells within the defined square
+                }
                
                 var rewardComponent = new QtableRewardComponent { reward = reward };
                 state.EntityManager.AddComponentData(Qtable, rewardComponent);
@@ -85,10 +50,10 @@ public partial struct QlearningSystem : ISystem
         }
  
         foreach(var QtablePossibleAction  in SystemAPI.Query<RefRW<QtableComponent>>()){
-            QtablePossibleAction.ValueRW.up = random.NextFloat(1000.0f, 1000.1f);
-            QtablePossibleAction.ValueRW.down = random.NextFloat(1000.0f, 1000.1f);
-            QtablePossibleAction.ValueRW.left = random.NextFloat(1000.0f, 1000.1f);
-            QtablePossibleAction.ValueRW.right = random.NextFloat(1000.0f, 1000.1f);
+            QtablePossibleAction.ValueRW.up = 0.1f;// random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.down = 0.1f;// random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.left = 0.1f;// random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.right = 0.1f;// random.NextFloat(0.0f, 0.001f);
         }
     }
     [BurstCompile]
@@ -96,98 +61,69 @@ public partial struct QlearningSystem : ISystem
     {   
         var qlearnconfig =  SystemAPI.GetSingleton<ConfigQlearn>();
         var gridconfig =  SystemAPI.GetSingleton<ConfigQlearnGrid>();
-        NativeList<float> listOfFlatenIndexAgentPositionOnGrid = new NativeList<float>(Allocator.TempJob);
-        foreach(var enemy in SystemAPI.Query<RefRO<EnemyGridPositionComponent>>()){
-            listOfFlatenIndexAgentPositionOnGrid.Add(enemy.ValueRO.gridFlatenPosition);
-           
-        }
-       
+      
         NativeList<float4> qtables = new NativeList<float4>(Allocator.TempJob);
         NativeList<float> qreward = new NativeList<float>(Allocator.TempJob);
         
-        foreach((var QtableComponent,var reward)  in SystemAPI.Query<RefRW<QtableComponent>,RefRO<QtableRewardComponent>>()){
+        foreach((var QtableComponent,var reward)  in SystemAPI.Query<RefRO<QtableComponent>,RefRO<QtableRewardComponent>>()){
            qtables.Add(new float4(QtableComponent.ValueRO.up,QtableComponent.ValueRO.down,QtableComponent.ValueRO.right,QtableComponent.ValueRO.left));
            qreward.Add(reward.ValueRO.reward);
         }
-        int indexAgentPositionOnGrid = 0;
-        int numberOfAgentActive = 0;
-        foreach((var Qtable,var reward)  in SystemAPI.Query<RefRW<QtableComponent>,RefRO<QtableRewardComponent>>()){
-            
-            if(ContainsValue(listOfFlatenIndexAgentPositionOnGrid,(float)indexAgentPositionOnGrid)){
-            // Determine the action using epsilon-greedy policy
-             
-            float action = SelectAction(indexAgentPositionOnGrid, qlearnconfig.epsilon,qtables[indexAgentPositionOnGrid]);
-            if (action == -1){return;}
-            // // Update position based on action (this is a simplified representation)
-            // UpdatePosition(ref position, action);
-            
-
-            float nextActionindex = GetNeighborIndices(indexAgentPositionOnGrid,action,gridconfig.width,gridconfig.height);
-            
-            // Invalid action
-            if (nextActionindex == -1){return;}
-            
-
-            // // Update Q-value using the Q-learning formula
-            float oldQValue =0;
-            switch (action)
-            {
-                case 0: 
-                    oldQValue=Qtable.ValueRO.up;
-                    break;
-                case 1:
-                    oldQValue=Qtable.ValueRO.down;
-                    break;
-                case 2:
-                    oldQValue=Qtable.ValueRO.right;
-                    break;
-                case 3:
-                    oldQValue=Qtable.ValueRO.left;
-                    break;
-            }
-            //Debug.Log("oldQValue"+oldQValue.ToString());
-            float maxNextQValue = math.cmax(qtables[(int)nextActionindex]); 
-            //Debug.Log("maxNextQValue"+maxNextQValue.ToString());
-
-            switch (action)
-            {
-                case 0: 
-                    Qtable.ValueRW.up = oldQValue + qlearnconfig.alpha * (qreward[(int)nextActionindex] + qlearnconfig.gamma * maxNextQValue - oldQValue);
-                    break;
-                case 1:
-                    Qtable.ValueRW.down = oldQValue + qlearnconfig.alpha * (qreward[(int)nextActionindex] + qlearnconfig.gamma * maxNextQValue - oldQValue);
-                    break;
-                case 2:
-                    Qtable.ValueRW.right = oldQValue + qlearnconfig.alpha * (qreward[(int)nextActionindex] + qlearnconfig.gamma * maxNextQValue - oldQValue);
-                    break;
-                case 3:
-                    Qtable.ValueRW.left = oldQValue + qlearnconfig.alpha * (qreward[(int)nextActionindex] + qlearnconfig.gamma * maxNextQValue - oldQValue);
-                    break;
-            }
-            listOfFlatenIndexAgentPositionOnGrid[numberOfAgentActive]=action; // reusing the list with the chosen action 
-            numberOfAgentActive++;
-            }
-            indexAgentPositionOnGrid++;
-        }
-        int countEnemiesAction = 0;
+        
         foreach(var enemy in SystemAPI.Query<RefRW<EnemyGridPositionComponent>>()){
-            enemy.ValueRW.chosenAction = listOfFlatenIndexAgentPositionOnGrid[countEnemiesAction];
-            enemy.ValueRW.isDoingAction = true;
-            countEnemiesAction++;
+            if(!enemy.ValueRO.isDoingAction){
+              
+                var x = qtables[(int)enemy.ValueRO.gridFlatenPosition].x;
+                var y = qtables[(int)enemy.ValueRO.gridFlatenPosition].y;
+                var z = qtables[(int)enemy.ValueRO.gridFlatenPosition].z;
+                var w = qtables[(int)enemy.ValueRO.gridFlatenPosition].w;
+
+                var positionInitial =  enemy.ValueRO.gridFlatenPosition;
+                // Determine the action using epsilon-greedy policy
+                var (chosenAction, actionValue) = SelectAction(positionInitial, qlearnconfig.epsilon,qtables[(int)positionInitial]
+                    ,enemy.ValueRO.chosenAction,gridconfig.width,gridconfig.height);
+               
+                float nextActionIndexPosition = GetNeighborIndices(positionInitial,chosenAction,gridconfig.width,gridconfig.height);
+       
+                var (chosenNextAction, nextActionValue) = SelectAction(nextActionIndexPosition, qlearnconfig.epsilon,qtables[(int)nextActionIndexPosition]
+                    ,chosenAction,gridconfig.width,gridconfig.height);
+
+
+                enemy.ValueRW.chosenAction = chosenAction;
+                var numberOfSteps = enemy.ValueRW.numberOfSteps++;
+                enemy.ValueRW.isDoingAction = true;
+
+                switch (chosenAction)
+                {
+                    case 0: 
+                        x = actionValue + qlearnconfig.alpha * (qreward[(int)nextActionIndexPosition]+(numberOfSteps*-0.01f) + qlearnconfig.gamma * nextActionValue - actionValue);
+                        break;
+                    case 1:
+                        y = actionValue + qlearnconfig.alpha * (qreward[(int)nextActionIndexPosition]+(numberOfSteps*-0.01f) + qlearnconfig.gamma * nextActionValue - actionValue);
+                        break;
+                    case 2:
+                        z = actionValue + qlearnconfig.alpha * (qreward[(int)nextActionIndexPosition]+(numberOfSteps*-0.01f) + qlearnconfig.gamma * nextActionValue - actionValue);
+                        break;
+                    case 3:
+                        w = actionValue + qlearnconfig.alpha * (qreward[(int)nextActionIndexPosition]+(numberOfSteps*-0.01f) + qlearnconfig.gamma * nextActionValue - actionValue);
+                        break;
+                }
+                qtables[(int)enemy.ValueRO.gridFlatenPosition] = new float4(x,y,z,w);
+            }
         }
-        listOfFlatenIndexAgentPositionOnGrid.Dispose();
+        int indexqtable = 0;
+        foreach(var qtableComponent  in SystemAPI.Query<RefRW<QtableComponent>>()){
+            qtableComponent.ValueRW.up=qtables[indexqtable].x;
+            qtableComponent.ValueRW.down=qtables[indexqtable].y;
+            qtableComponent.ValueRW.right=qtables[indexqtable].z;
+            qtableComponent.ValueRW.left=qtables[indexqtable].w;
+            indexqtable++;
+        }
+   
         qtables.Dispose();
         qreward.Dispose();
       
     }
-    bool ContainsValue(NativeList<float> list, float value) {
-    for (int i = 0; i < list.Length; i++) {
-        if (list[i] == value) {
-            return true; // Found the value
-        }
-    }
-    return false; // Value not found
-}
     public float GetNeighborIndices(float index, float chosenAction, float width, float height)
     {
         // Calculate row and column from index
@@ -211,20 +147,61 @@ public partial struct QlearningSystem : ISystem
         }
     }
 
-    private float SelectAction(float index, float epsilon,float4 possibleMovAction) {
-        if (random.NextFloat(0f, 1f) < epsilon) {
-                // Return a random action
-                return random.NextInt(0, 4);
-        } else { 
-                return GetMaxValueAction(possibleMovAction);
+    private (float action, float value) SelectAction(float index, float epsilon, float4 possibleMovAction, float oldAction, float width, float height) {
+       
+        NativeList<float> validActions = new NativeList<float>(Allocator.Temp);
+
+        for (int i = 0; i < 4; i++) {
+            if (i != oldAction && GetNeighborIndices(index, i, width, height) != -1) {
+                validActions.Add(i);
+            }
         }
+
+        float chosenAction;
+        float actionValue;
+
+        if (random.NextFloat(0f, 1f) < epsilon || validActions.Length == 0) {
+            
+            int randomIndex = random.NextInt(0, validActions.Length); 
+            chosenAction = validActions[randomIndex];
+            
+            actionValue = chosenAction switch {
+                0 => possibleMovAction.x,
+                1 => possibleMovAction.y,
+                2 => possibleMovAction.z,
+                3 => possibleMovAction.w,
+                _ => 0 // Default case, shouldn't be hit
+            };
+        } else {
+            // Choose the best action from validActions
+            var maxAction = GetMaxValueActionFromValidActions(possibleMovAction, validActions);
+            chosenAction = validActions[maxAction.index];
+            actionValue = maxAction.value;
+        }
+
+        validActions.Dispose();
+        return (chosenAction, actionValue);
     }
-    private float GetMaxValueAction(float4 possibleMovAction){
-        float highestValue = math.cmax(possibleMovAction); 
-        float action = highestValue == possibleMovAction.x ? 1 :
-            highestValue == possibleMovAction.y ? 2 :
-            highestValue == possibleMovAction.z ? 3 : 4;
-        return action;
+
+    private (int index, float value) GetMaxValueActionFromValidActions(float4 possibleMovAction, NativeList<float> validActions) {
+        float maxActionValue = float.MinValue;
+        int maxActionIndex = 0;
+
+        for (int i = 0; i < validActions.Length; i++) {
+            float actionValue = 0;
+            switch ((int)validActions[i]) {
+                case 0: actionValue = possibleMovAction.x; break;
+                case 1: actionValue = possibleMovAction.y; break;
+                case 2: actionValue = possibleMovAction.z; break;
+                case 3: actionValue = possibleMovAction.w; break;
+            }
+
+            if (actionValue > maxActionValue) {
+                maxActionValue = actionValue;
+                maxActionIndex = i;
+            }
+        }
+
+        return (maxActionIndex, maxActionValue);
     }
-    
 }

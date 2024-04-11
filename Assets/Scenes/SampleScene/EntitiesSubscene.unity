@@ -678,7 +678,7 @@ PrefabInstance:
     - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
         type: 3}
       propertyPath: epsilon
-      value: 0.1
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
         type: 3}

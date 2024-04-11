@@ -41,6 +41,7 @@ public partial struct OptimizedSpawnerSystem : ISystem
             Ecb = ecb,
             rnd = rnd
         }.ScheduleParallel();
+        state.Dependency.Complete();   
     }
 
     private EntityCommandBuffer.ParallelWriter GetEntityCommandBuffer(ref SystemState state)

@@ -3,6 +3,8 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
+
+[UpdateBefore(typeof(QlearningSystem))]
 public partial struct EnemyMovementSystem : ISystem
 {
    
@@ -14,6 +16,7 @@ public partial struct EnemyMovementSystem : ISystem
     }
 
     [BurstCompile] 
+   
     public void OnUpdate(ref SystemState state)
     {
         
@@ -110,21 +113,28 @@ public partial struct EnemyDisableInGridJob : IJobEntity
         ,EnabledRefRW<EnemyGridPositionComponent> enemyGridEnableRef,ref EnemyGridPositionComponent enemyGridPositionComponent)
     {
         if(!IsPositionInSquare(localTransform.Position,PlayerPosition)){
+           enemyGridPositionComponent.isDoingAction = false; 
            enemyGridEnableRef.ValueRW = false;
         }
         else
         {
-            enemyGridPositionComponent.gridFlatenPosition = CalculateFlattenedGridPosition(PlayerPosition,localTransform.Position,cellSize,width,height);
+            var actualPosition = CalculateFlattenedGridPosition(PlayerPosition,localTransform.Position,cellSize,width,height);
             
+            if (actualPosition != enemyGridPositionComponent.gridFlatenPosition){
+                enemyGridPositionComponent.isDoingAction = false; 
+            }
+            
+            enemyGridPositionComponent.gridFlatenPosition = actualPosition;
+
             if(enemyGridPositionComponent.isDoingAction){
                 float3 direction = new float3(0,0,0);
                 switch (enemyGridPositionComponent.chosenAction)
                 {
                     case 0: 
-                        direction.z+=1;
+                        direction.z-=1;
                         break;
                     case 1:
-                        direction.z-=1;
+                        direction.z+=1;
                         break;
                     case 2:
                         direction.x+=1;

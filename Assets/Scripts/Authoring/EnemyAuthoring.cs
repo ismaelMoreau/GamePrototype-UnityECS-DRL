@@ -8,7 +8,7 @@ public class EnemyAuthoring : MonoBehaviour
     public float speed = 2f;
 
 
-
+    public float numberOfSteps = 0;
 
     
     private class Baker : Baker<EnemyAuthoring>
@@ -29,7 +29,10 @@ public class EnemyAuthoring : MonoBehaviour
             AddComponent(entity,new DestroyTag{});
             SetComponentEnabled<DestroyTag>(entity, false);
 
-            AddComponent(entity,new EnemyGridPositionComponent{});
+            AddComponent(entity,new EnemyGridPositionComponent{
+                isDoingAction = false,
+                numberOfSteps = authoring.numberOfSteps
+            });
             SetComponentEnabled<EnemyGridPositionComponent>(entity, false);
         }
     }
@@ -49,6 +52,7 @@ public struct EnemyGridPositionComponent : IComponentData, IEnableableComponent
     public bool isDoingAction;
 
     public float chosenAction;
+    public float numberOfSteps;
 }
 
 public struct DestroyTag : IComponentData, IEnableableComponent{ 

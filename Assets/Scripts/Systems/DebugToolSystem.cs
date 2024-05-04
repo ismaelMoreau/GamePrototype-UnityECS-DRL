@@ -7,8 +7,8 @@ using System.Resources;
 using Unity.Collections;
 using Unity.VisualScripting;
 
-[UpdateAfter(typeof(QlearningSystem))]
-[CreateAfter(typeof(QlearningSystem))]
+[UpdateAfter(typeof(EnemyMovementSystem))]
+[CreateAfter(typeof(EnemyMovementSystem))]
     public partial struct DebugToolSystem : ISystem
     {
         private bool initialized;
@@ -25,7 +25,7 @@ using Unity.VisualScripting;
       
         public void OnUpdate(ref SystemState state)
         {   
-            var config = SystemAPI.GetSingleton<ConfigQlearnGrid>(); // Assuming this has width, height, and cellSize
+            var config = SystemAPI.GetSingleton<ConfigQlearnGrid>(); 
             var configEntity = SystemAPI.GetSingletonEntity<ConfigQlearnGrid>();
             var configManaged = state.EntityManager.GetComponentObject<ConfigManaged>(configEntity);
             if (Input.GetKey(KeyCode.A)) {
@@ -74,8 +74,8 @@ using Unity.VisualScripting;
                 }
 
                 // Use config values for grid size, spacing, and center position setup
-                float gridSizeX = config.width;
-                float gridSizeZ = config.height;
+                int gridSizeX = config.width;
+                int gridSizeZ = config.height;
                 float cellSize = config.cellSize; // Assuming each cell in the grid is defined by cellSize units
                 float3 bottomLeftPosition = centerPosition - new float3(gridSizeX * cellSize / 2, 0, gridSizeZ * cellSize / 2);
                 int y = 1; // To ensure visibility above ground

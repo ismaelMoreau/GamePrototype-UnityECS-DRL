@@ -18,7 +18,8 @@ public class QlearningAuthoring : MonoBehaviour
 public struct QtableComponent: IComponentData
 {
 
-    public float up, down, left, right;
+    public float up, down, right, left, upRight, upLeft, downRight, downLeft, stay;
+    public int indexOfQtableComponent;
 
 }
 public struct QtableRewardComponent: IComponentData

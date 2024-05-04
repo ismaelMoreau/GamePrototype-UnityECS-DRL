@@ -8,8 +8,10 @@ public class EnemyAuthoring : MonoBehaviour
     public float speed = 2f;
 
 
-    public float numberOfSteps = 0;
-
+    public int numberOfSteps = 0;
+    public float earnReward= 0;
+    public float actionTimer= 0;
+    public float actionDuration= 0;
     
     private class Baker : Baker<EnemyAuthoring>
     {
@@ -29,32 +31,60 @@ public class EnemyAuthoring : MonoBehaviour
             AddComponent(entity,new DestroyTag{});
             SetComponentEnabled<DestroyTag>(entity, false);
 
-            AddComponent(entity,new EnemyGridPositionComponent{
+            AddComponent(entity,new EnemyActionComponent{
                 isDoingAction = false,
-                numberOfSteps = authoring.numberOfSteps
+                numberOfSteps = authoring.numberOfSteps,
+                IsReadyToUpdateQtable = false
             });
-            SetComponentEnabled<EnemyGridPositionComponent>(entity, false);
+            SetComponentEnabled<EnemyActionComponent>(entity, false);
+            AddComponent(entity,new EnemyRewardComponent{
+                earnReward= authoring.earnReward
+            });
+            AddComponent(entity,new EnemyActionTimerComponent{
+                
+                actionTimer = authoring.actionTimer,
+                actionDuration = authoring.actionDuration
+            });
+            
         }
     }
 }
 public struct EnemyMovementComponent : IComponentData
 {
-   
     public float speed;
 }
 public struct EnemyHealthComponent : IComponentData
 {
     public float health;
 }
-public struct EnemyGridPositionComponent : IComponentData, IEnableableComponent
+public struct EnemyActionComponent : IComponentData, IEnableableComponent
 {
-    public float gridFlatenPosition;
+    public int gridFlatenPosition;
+    
+    public bool IsReadyToUpdateQtable;//not use
+
     public bool isDoingAction;
 
-    public float chosenAction;
-    public float numberOfSteps;
-}
+    public int chosenAction;
+    public int numberOfSteps;
 
+    public float chosenActionQvalue;
+
+    public int chosenNextAction;
+    public float chosenNextActionQvalue;
+
+    public int nextActionGridFlatenPosition;
+}
+public struct EnemyRewardComponent : IComponentData, IEnableableComponent
+{
+    public float earnReward;
+}
+public struct EnemyActionTimerComponent : IComponentData 
+{
+    
+    public float actionTimer;
+    public float actionDuration;
+}
 public struct DestroyTag : IComponentData, IEnableableComponent{ 
   
 }

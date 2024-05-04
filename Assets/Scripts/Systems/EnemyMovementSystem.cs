@@ -4,7 +4,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Collections;
 
-[UpdateBefore(typeof(QlearningSystem))]
+// [UpdateBefore(typeof(QlearningActionSelectionSystem))]
+[UpdateAfter(typeof(QlearningCalculationSystem))]
 public partial struct EnemyMovementSystem : ISystem
 {
    
@@ -59,7 +60,7 @@ public partial struct EnemyMovementSystem : ISystem
     
 }
 // Job to move enemies towards the player
-[WithNone(typeof(EnemyGridPositionComponent))]
+[WithNone(typeof(EnemyActionComponent))]
 [BurstCompile] 
 public partial struct EnemyMoveTowardsPlayerJob : IJobEntity
 {
@@ -82,7 +83,7 @@ public partial struct EnemyMoveTowardsPlayerJob : IJobEntity
         }
         else
         {
-           ECB.SetComponentEnabled<EnemyGridPositionComponent>(index, entity, true); 
+           ECB.SetComponentEnabled<EnemyActionComponent>(index, entity, true); 
         }
        
     }
@@ -103,47 +104,93 @@ public partial struct EnemyDisableInGridJob : IJobEntity
     public float DeltaTime;
     //public float CollisionRadius;
 
-    public float height;
-    public float width;
+    public int height;
+    public int width;
 
     public float cellSize;
     
 
     public void Execute(Entity entity,[ChunkIndexInQuery]int index, ref LocalTransform localTransform, in EnemyMovementComponent enemy
-        ,EnabledRefRW<EnemyGridPositionComponent> enemyGridEnableRef,ref EnemyGridPositionComponent enemyGridPositionComponent)
+        ,EnabledRefRW<EnemyActionComponent> enemyGridEnableRef,ref EnemyActionComponent EnemyActionComponent, ref EnemyActionTimerComponent enemyActionTimerComponent)
     {
         if(!IsPositionInSquare(localTransform.Position,PlayerPosition)){
-           enemyGridPositionComponent.isDoingAction = false; 
+           EnemyActionComponent.isDoingAction = false; 
            enemyGridEnableRef.ValueRW = false;
         }
         else
         {
             var actualPosition = CalculateFlattenedGridPosition(PlayerPosition,localTransform.Position,cellSize,width,height);
             
-            if (actualPosition != enemyGridPositionComponent.gridFlatenPosition){
-                enemyGridPositionComponent.isDoingAction = false; 
-            }
-            
-            enemyGridPositionComponent.gridFlatenPosition = actualPosition;
+            // if (actualPosition != EnemyActionComponent.gridFlatenPosition){
+            //     EnemyActionComponent.isDoingAction = false; 
+            // }
+        
 
-            if(enemyGridPositionComponent.isDoingAction){
-                float3 direction = new float3(0,0,0);
-                switch (enemyGridPositionComponent.chosenAction)
+            EnemyActionComponent.gridFlatenPosition = actualPosition;
+
+            if (EnemyActionComponent.isDoingAction) {
+                enemyActionTimerComponent.actionTimer += DeltaTime;
+
+                if (enemyActionTimerComponent.actionTimer >= enemyActionTimerComponent.actionDuration)
                 {
-                    case 0: 
-                        direction.z-=1;
-                        break;
-                    case 1:
-                        direction.z+=1;
-                        break;
-                    case 2:
-                        direction.x+=1;
-                        break;
-                    case 3:
-                        direction.x-=1;
-                        break;
+                    // Action completed
+                    EnemyActionComponent.isDoingAction = false;
+                    EnemyActionComponent.IsReadyToUpdateQtable = true;
+                    enemyActionTimerComponent.actionTimer = 0f;
                 }
-                localTransform.Position += direction * enemy.speed * DeltaTime;
+                else
+                {
+                    float3 direction = new float3(0, 0, 0);
+                    float speedMultiplier = 1.0f; // Default multiplier
+
+                    switch (EnemyActionComponent.chosenAction)
+                    {
+                        case 0: // Up
+                            direction.z -= 1;
+                            break;
+                        case 1: // Down
+                            direction.z += 1;
+                            break;
+                        case 2: // Right
+                            direction.x += 1;
+                            break;
+                        case 3: // Left
+                            direction.x -= 1;
+                            break;
+                        case 4: // UpRight
+                            direction.z -= 1;
+                            direction.x += 1;
+                            break;
+                        case 5: // UpLeft
+                            direction.z -= 1;
+                            direction.x -= 1;
+                            break;
+                        case 6: // DownRight
+                            direction.z += 1;
+                            direction.x += 1;
+                            break;
+                        case 7: // DownLeft
+                            direction.z += 1;
+                            direction.x -= 1;
+                            break;
+                        case 8: // Dash
+                            // Set direction to the entity's forward direction
+                            direction = math.forward(localTransform.Rotation);
+                            speedMultiplier = 3.0f; // Adjust this multiplier for desired dash speed
+                            break;
+                    }
+
+                    // Normalize the direction to prevent scaling issues and calculate the new position
+                    if (math.lengthsq(direction) > 0.01f)
+                    {
+                        direction = math.normalize(direction);
+                        localTransform.Position += direction * enemy.speed * speedMultiplier * DeltaTime;
+
+                        // Calculate the quaternion for rotation
+                        quaternion targetRotation = quaternion.LookRotationSafe(direction, math.up());
+                        localTransform.Rotation = targetRotation;
+                    }
+                }
             }
         }
        
@@ -157,25 +204,73 @@ public partial struct EnemyDisableInGridJob : IJobEntity
         float diffZ = math.abs(position.z - center.z);
         return diffX <= halfx && diffZ <= halfz;
     }
-    float CalculateFlattenedGridPosition(float3 playerPosition, float3 enemyPosition, float cellSize, float width, float height)
+    int CalculateFlattenedGridPosition(float3 playerPosition, float3 enemyPosition, float cellSize, int width, int height)
     {
         // Calculate the relative position of the enemy to the player
         float3 relativePosition = enemyPosition - playerPosition;
 
         // Convert the world space relative position to grid coordinates
         // Offset by half the grid dimensions to center the grid around the player
-        float gridX = math.floor((relativePosition.x / cellSize) + (width / 2.0f));
-        float gridZ = math.floor((relativePosition.z / cellSize) + (height / 2.0f));
+        int gridX = (int)(math.floor(relativePosition.x / cellSize) + width / 2);
+        int gridZ = (int)(math.floor(relativePosition.z / cellSize) + height / 2);
 
         // // Clamp gridX and gridZ to the grid dimensions to handle positions outside the grid
         // gridX = math.clamp(gridX, 0, width - 1);
         // gridZ = math.clamp(gridZ, 0, height - 1);
 
         // Calculate the flattened grid position using the width for row-major order indexing
-        float flattenedIndex = gridZ * width + gridX;
+        int flattenedIndex = gridZ * width + gridX;
 
         return flattenedIndex;
     }
+
+
+    // float3 ChosenEnemyDirection(int chosenAction,float speedMultiplier)
+    // {
+    //     float3 direction = new float3(0, 0, 0);
+
+    //     switch (chosenAction)
+    //     {
+    //         case 0: // Up
+    //             direction.z -= 1;
+    //             break;
+    //         case 1: // Down
+    //             direction.z += 1;
+    //             break;
+    //         case 2: // Right
+    //             direction.x += 1;
+    //             break;
+    //         case 3: // Left
+    //             direction.x -= 1;
+    //             break;
+    //         case 4: // UpRight
+    //             direction.z -= 1;
+    //             direction.x += 1;
+    //             break;
+    //         case 5: // UpLeft
+    //             direction.z -= 1;
+    //             direction.x -= 1;
+    //             break;
+    //         case 6: // DownRight
+    //             direction.z += 1;
+    //             direction.x += 1;
+    //             break;
+    //         case 7: // DownLeft
+    //             direction.z += 1;
+    //             direction.x -= 1;
+    //             break;
+    //         case 8: // Stay
+    //             // No change in direction, enemy stays in place
+    //             break;
+    //     }
+
+    //     return direction;
+    // }
+
+
+
+   
+
 } 
 
 

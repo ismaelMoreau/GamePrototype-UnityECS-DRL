@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
 using Unity.Mathematics;
+using Random= Unity.Mathematics.Random;
 
 public class ConfigsAuthoring : MonoBehaviour
 {   
@@ -14,14 +15,17 @@ public class ConfigsAuthoring : MonoBehaviour
     public float Damage;
     public GameObject PrefabAoe;
 
-    public float height= 20;
-    public float width= 20;
+    public int height= 20;
+    public int width= 20;
 
     public float cellSize= 1.0f;
 
     public float epsilon = 1;
     public float alpha = 0.1f;
     public float gamma = 0.8f;
+
+    public bool isInitQlearning = false;
+
     private class Baker : Baker<ConfigsAuthoring>{
         public override void Bake(ConfigsAuthoring authoring)
         {
@@ -43,7 +47,9 @@ public class ConfigsAuthoring : MonoBehaviour
             AddComponent(entity ,new ConfigQlearn{
                 epsilon= authoring.epsilon,
                 alpha = authoring.alpha,
-                gamma = authoring.gamma
+                gamma = authoring.gamma,
+                random = new Random(123),
+                isInitQlearning = authoring.isInitQlearning
             });
         }
     }
@@ -64,8 +70,8 @@ public class ConfigManaged : IComponentData
 }
 public struct ConfigQlearnGrid : IComponentData
 {
-    public float height;
-    public float width;
+    public int height;
+    public int width;
 
     public float cellSize;
 }
@@ -74,5 +80,9 @@ public struct ConfigQlearn : IComponentData
     public float epsilon;
     public float alpha;
     public float gamma;
+
+    public Random random;
+
+    public bool isInitQlearning;
 
 }

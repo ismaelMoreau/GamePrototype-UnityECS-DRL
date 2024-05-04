@@ -20,7 +20,7 @@ public class ConfigsAuthoring : MonoBehaviour
 
     public float cellSize= 1.0f;
 
-    public float epsilon = 1;
+    public float sartingEpsilon = 1;
     public float alpha = 0.1f;
     public float gamma = 0.8f;
 
@@ -45,7 +45,7 @@ public class ConfigsAuthoring : MonoBehaviour
                 cellSize = authoring.cellSize
             });
             AddComponent(entity ,new ConfigQlearn{
-                epsilon= authoring.epsilon,
+                sartingEpsilon= authoring.sartingEpsilon,
                 alpha = authoring.alpha,
                 gamma = authoring.gamma,
                 random = new Random(123),
@@ -77,7 +77,7 @@ public struct ConfigQlearnGrid : IComponentData
 }
 public struct ConfigQlearn : IComponentData
 {
-    public float epsilon;
+    public float sartingEpsilon;
     public float alpha;
     public float gamma;
 

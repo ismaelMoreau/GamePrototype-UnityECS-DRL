@@ -134,7 +134,7 @@ PrefabInstance:
     - target: {fileID: 2443699031488655080, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
       propertyPath: SpawnRate
-      value: 11111
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6697415168630587217, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
@@ -420,6 +420,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 6697415168630587217, guid: bb6ec7db7187f9f458f971680648821e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7968710003751557141, guid: bb6ec7db7187f9f458f971680648821e,
         type: 3}
       propertyPath: m_LocalScale.x
@@ -700,6 +705,11 @@ PrefabInstance:
         type: 3}
       propertyPath: LastUsedTime
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
+        type: 3}
+      propertyPath: sartingEpsilon
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 2422644223443740544, guid: 6b4a95ba117d77891bbf685f6751e5dc,
         type: 3}

@@ -5,7 +5,7 @@ using Unity.Transforms;
 using Unity.Collections;
 
 // [UpdateBefore(typeof(QlearningActionSelectionSystem))]
-[UpdateAfter(typeof(QlearningCalculationSystem))]
+[UpdateAfter(typeof(QlearningActionSelectionSystem))]
 public partial struct EnemyMovementSystem : ISystem
 {
    
@@ -121,79 +121,60 @@ public partial struct EnemyDisableInGridJob : IJobEntity
         {
             var actualPosition = CalculateFlattenedGridPosition(PlayerPosition,localTransform.Position,cellSize,width,height);
             
-            // if (actualPosition != EnemyActionComponent.gridFlatenPosition){
-            //     EnemyActionComponent.isDoingAction = false; 
-            // }
-        
+            // Calculate the direction to the player and ensure the enemy faces the player
+            float3 playerDirection = math.normalize(PlayerPosition - localTransform.Position);
+            localTransform.Rotation = quaternion.LookRotationSafe(playerDirection, math.up());
 
             EnemyActionComponent.gridFlatenPosition = actualPosition;
 
-            if (EnemyActionComponent.isDoingAction) {
+            if (EnemyActionComponent.isDoingAction)
+            {
                 enemyActionTimerComponent.actionTimer += DeltaTime;
 
                 if (enemyActionTimerComponent.actionTimer >= enemyActionTimerComponent.actionDuration)
                 {
                     // Action completed
                     EnemyActionComponent.isDoingAction = false;
-                    EnemyActionComponent.IsReadyToUpdateQtable = true;
+                    // if player moved
+                    if (actualPosition == EnemyActionComponent.nextActionGridFlatenPosition)
+                        { EnemyActionComponent.IsReadyToUpdateQtable = true; }
+                    
                     enemyActionTimerComponent.actionTimer = 0f;
                 }
                 else
                 {
-                    float3 direction = new float3(0, 0, 0);
+                    float3 moveDirection = new float3(0, 0, 0);
                     float speedMultiplier = 1.0f; // Default multiplier
 
                     switch (EnemyActionComponent.chosenAction)
                     {
-                        case 0: // Up
-                            direction.z -= 1;
+                        case 0: // Move toward the player
+                            moveDirection = playerDirection;
                             break;
-                        case 1: // Down
-                            direction.z += 1;
+                        case 1: // Move backward
+                            moveDirection = -playerDirection;
                             break;
-                        case 2: // Right
-                            direction.x += 1;
+                        case 2: // Step to the right
+                            moveDirection = math.cross(playerDirection, math.up());
                             break;
-                        case 3: // Left
-                            direction.x -= 1;
+                        case 3: // Step to the left
+                            moveDirection = math.cross(math.up(), playerDirection);
                             break;
-                        case 4: // UpRight
-                            direction.z -= 1;
-                            direction.x += 1;
-                            break;
-                        case 5: // UpLeft
-                            direction.z -= 1;
-                            direction.x -= 1;
-                            break;
-                        case 6: // DownRight
-                            direction.z += 1;
-                            direction.x += 1;
-                            break;
-                        case 7: // DownLeft
-                            direction.z += 1;
-                            direction.x -= 1;
-                            break;
-                        case 8: // Dash
-                            // Set direction to the entity's forward direction
-                            direction = math.forward(localTransform.Rotation);
-                            speedMultiplier = 3.0f; // Adjust this multiplier for desired dash speed
+                        case 4: // Dash forward
+                            moveDirection = playerDirection;
+                            speedMultiplier = 2.0f; // Adjust this multiplier for desired dash speed
                             break;
                     }
 
-                    // Normalize the direction to prevent scaling issues and calculate the new position
-                    if (math.lengthsq(direction) > 0.01f)
+                    // Normalize the move direction and calculate the new position
+                    if (math.lengthsq(moveDirection) > 0.01f)
                     {
-                        direction = math.normalize(direction);
-                        localTransform.Position += direction * enemy.speed * speedMultiplier * DeltaTime;
-
-                        // Calculate the quaternion for rotation
-                        quaternion targetRotation = quaternion.LookRotationSafe(direction, math.up());
-                        localTransform.Rotation = targetRotation;
+                        moveDirection = math.normalize(moveDirection);
+                        localTransform.Position += moveDirection * enemy.speed * speedMultiplier * DeltaTime;
                     }
                 }
             }
         }
-       
     }
     bool IsPositionInSquare(float3 position, float3 center)
     {

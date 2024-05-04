@@ -7,20 +7,24 @@ using Unity.Burst;
 using Random= Unity.Mathematics.Random;
 using System;
 
-[UpdateBefore(typeof(QlearningActionSelectionSystem))]
+//[UpdateBefore(typeof(QlearningActionSelectionSystem))]
+ [UpdateBefore(typeof(TransformSystemGroup))]
 public partial struct QlearningInitSystem : ISystem
 {
-    // public void OnCreate(ref SystemState state){
-    //      state.RequireForUpdate<ConfigQlearn>();
-    // }
-    
     public void OnCreate(ref SystemState state){
+         state.RequireForUpdate<ConfigQlearn>();
+    }
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state){
         
 
+         
+       state.Enabled = false;
         
-       
+        var configQlearn =  SystemAPI.GetSingleton<ConfigQlearn>();
         
-        //var gridconfig =  SystemAPI.GetSingleton<ConfigQlearnGrid>();
+        var configQlearnGrid =  SystemAPI.GetSingleton<ConfigQlearnGrid>();
+        
 
         int centerX = 9;
         int centerZ = 9;
@@ -30,9 +34,9 @@ public partial struct QlearningInitSystem : ISystem
         float maxReward = 0f; // Maximum reward at the center
         float minReward = 0f; 
 
-        for (int x = 0; x < 20; x++)
+        for (int x = 0; x < configQlearnGrid.width; x++)
         {
-            for (int z = 0; z < 20; z++)
+            for (int z = 0; z < configQlearnGrid.height; z++)
             {
                 Entity Qtable = state.EntityManager.CreateEntity();
                 state.EntityManager.AddComponent<QtableComponent>(Qtable);
@@ -44,7 +48,7 @@ public partial struct QlearningInitSystem : ISystem
                 float reward = minReward + (maxReward - minReward) * ((float)(maxDistance - distanceFromCenter) / maxDistance);
                  if (x >= (centerX - regionSize) && x <= (centerX + regionSize) && 
                     z >= (centerZ - regionSize) && z <= (centerZ + regionSize)) {
-                    reward = 1000f; // Set reward to 1000 for cells within the defined square
+                   reward = 0f; // Set reward to 1000 for cells within the defined square
                 }
                
                 var rewardComponent = new QtableRewardComponent { reward = reward };
@@ -71,6 +75,8 @@ public partial struct QlearningInitSystem : ISystem
             QtablePossibleAction.ValueRW.indexOfQtableComponent = indexOfQtableComponent;
             indexOfQtableComponent++;
         }
+      
+       
         // foreach (EnemyRelativePositionFromPlayer position in Enum.GetValues(typeof(EnemyRelativePositionFromPlayer)))
         // {
         //     foreach (EnemyRelativeDirectionFromPLayer direction in Enum.GetValues(typeof(EnemyRelativeDirectionFromPLayer)))
@@ -98,8 +104,9 @@ public partial struct QlearningInitSystem : ISystem
 
 // public enum EnemyActions
 // {
-//     Stay,
-//     Move,
+//     RightSideStep,
+//     LeftSideStep,
+//     MoveFoward,
 //     Attack,
 //     Block,
 //     jump,

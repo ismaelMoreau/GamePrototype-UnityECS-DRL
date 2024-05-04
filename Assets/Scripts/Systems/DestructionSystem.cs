@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Burst;
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
 // [UpdateAfter(typeof(EndSimulationEntityCommandBufferSystem))] // Ensure it runs after command buffers are played back
+[UpdateAfter(typeof(QlearningCalculationSystem))] 
 public partial struct DestructionSystem : ISystem
 {
     

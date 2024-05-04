@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Burst;
 using Random = Unity.Mathematics.Random;
 
-[UpdateAfter(typeof(QlearningActionSelectionSystem))]
+[UpdateAfter(typeof(QlearningRewardSystem))]
 public partial struct QlearningCalculationSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
@@ -35,7 +35,7 @@ public partial struct QlearningCalculationSystem : ISystem
         {
             if (enemyActionComponent.ValueRO.IsReadyToUpdateQtable){
                 var qTable = qTables[enemyActionComponent.ValueRO.gridFlatenPosition];
-                var reward = qRewards[enemyActionComponent.ValueRO.gridFlatenPosition];//+ enemyRewardComponent.ValueRO.earnReward;
+                var reward = qRewards[enemyActionComponent.ValueRO.gridFlatenPosition]+ enemyRewardComponent.ValueRO.earnReward;
                 if(enemyRewardComponent.ValueRO.earnReward != 0){
                     enemyRewardComponent.ValueRW.earnReward= 0;
                 }

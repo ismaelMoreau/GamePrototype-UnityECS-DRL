@@ -12,6 +12,7 @@ public class EnemyAuthoring : MonoBehaviour
     public float earnReward= 0;
     public float actionTimer= 0;
     public float actionDuration= 0;
+    public float epsilon= 0.3f;
     
     private class Baker : Baker<EnemyAuthoring>
     {
@@ -45,6 +46,9 @@ public class EnemyAuthoring : MonoBehaviour
                 actionTimer = authoring.actionTimer,
                 actionDuration = authoring.actionDuration
             });
+            AddComponent(entity,new EnemyEpsilonComponent{
+                epsilon= authoring.epsilon
+            });
             
         }
     }
@@ -74,6 +78,8 @@ public struct EnemyActionComponent : IComponentData, IEnableableComponent
     public float chosenNextActionQvalue;
 
     public int nextActionGridFlatenPosition;
+
+    
 }
 public struct EnemyRewardComponent : IComponentData, IEnableableComponent
 {
@@ -84,6 +90,10 @@ public struct EnemyActionTimerComponent : IComponentData
     
     public float actionTimer;
     public float actionDuration;
+}
+public struct EnemyEpsilonComponent : IComponentData 
+{
+    public float epsilon;
 }
 public struct DestroyTag : IComponentData, IEnableableComponent{ 
   

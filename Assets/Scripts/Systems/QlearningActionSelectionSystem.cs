@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Burst;
 using Random= Unity.Mathematics.Random;
 
-[UpdateAfter(typeof(QlearningRewardSystem))]
+[UpdateAfter(typeof(QlearningInitSystem))]
 public partial struct QlearningActionSelectionSystem : ISystem
 {
     public Random random;
@@ -29,60 +29,110 @@ public partial struct QlearningActionSelectionSystem : ISystem
             QtableComponent.ValueRO.upRight,QtableComponent.ValueRO.upLeft,QtableComponent.ValueRO.downRight,QtableComponent.ValueRO.downLeft,QtableComponent.ValueRO.stay));
         }
 
-        foreach ((var enemy,var enemyActiontimer) in SystemAPI.Query<RefRW<EnemyActionComponent>,RefRW<EnemyActionTimerComponent>>())
+        foreach ((var enemy,var enemyActiontimer, var enemyEpsilon) in SystemAPI.Query<RefRW<EnemyActionComponent>,RefRW<EnemyActionTimerComponent>,RefRW<EnemyEpsilonComponent>>())
         {
             if (!enemy.ValueRO.isDoingAction)
             {
                 var positionInitial = enemy.ValueRO.gridFlatenPosition;
                 // Determine the action using epsilon-greedy policy
-                var (chosenAction, actionValue) = SelectAction(positionInitial, qlearnConfig.epsilon, qTables[positionInitial], enemy.ValueRO.chosenAction, gridConfig.width, gridConfig.height);
+                var (chosenAction, actionValue) = SelectAction(positionInitial, enemyEpsilon.ValueRO.epsilon, qTables[positionInitial], enemy.ValueRO.chosenAction, gridConfig.width, gridConfig.height);
 
                 int nextActionIndexFlattenPosition = GetNeighborIndices(positionInitial, chosenAction, gridConfig.width, gridConfig.height);
 
-                var (chosenNextAction, nextActionValue) = SelectAction(nextActionIndexFlattenPosition, qlearnConfig.epsilon, qTables[nextActionIndexFlattenPosition], chosenAction, gridConfig.width, gridConfig.height);
+                var (chosenNextAction, nextActionValue) = SelectAction(nextActionIndexFlattenPosition, enemyEpsilon.ValueRO.epsilon, qTables[nextActionIndexFlattenPosition], chosenAction, gridConfig.width, gridConfig.height);
 
                 enemy.ValueRW.chosenAction = chosenAction;
                 enemy.ValueRW.chosenActionQvalue = actionValue;
-                enemy.ValueRW.numberOfSteps++;
+                enemy.ValueRW.numberOfSteps = math.min(enemy.ValueRO.numberOfSteps+1 ,100);
+                enemyEpsilon.ValueRW.epsilon = math.max(enemyEpsilon.ValueRO.epsilon - 0.001f, 0.01f);
                 enemy.ValueRW.isDoingAction = true;
                 enemy.ValueRW.chosenNextAction = chosenNextAction;
                 enemy.ValueRW.chosenNextActionQvalue = nextActionValue;
                 enemy.ValueRW.nextActionGridFlatenPosition = nextActionIndexFlattenPosition;
                 
-                enemyActiontimer.ValueRW.actionDuration=1;// TODO: only move action for now , got to adjust on chosen action 
+                enemyActiontimer.ValueRW.actionDuration=0.5f;// TODO: only move action for now , got to adjust on chosen action 
             }
         }
 
         qTables.Dispose();
     }
 
-    public int GetNeighborIndices(int index, int chosenAction, int width, int height)
+//     public int GetNeighborIndices(int index, int chosenAction, int width, int height)
+// {
+//     int row = index / width;
+//     int col = index % width;
+
+//     int up = row > 0 ? index - width : -1;
+//     int down = row < height - 1 ? index + width : -1;
+//     int right = col < width - 1 ? index + 1 : -1;
+//     int left = col > 0 ? index - 1 : -1;
+//     int upLeft = (row > 0 && col > 0) ? index - width - 1 : -1;
+//     int upRight = (row > 0 && col < width - 1) ? index - width + 1 : -1;
+//     int downLeft = (row < height - 1 && col > 0) ? index + width - 1 : -1;
+//     int downRight = (row < height - 1 && col < width - 1) ? index + width + 1 : -1;
+
+//     switch (chosenAction)
+//     {
+//         case 0: return up;
+//         case 1: return down;
+//         case 2: return right;
+//         case 3: return left;
+//         case 4: return upRight;
+//         case 5: return upLeft;
+//         case 6: return downRight;
+//         case 7: return downLeft;
+//         case 8: return index; // Stay action returns the same index
+//         default: return -1;
+//     }
+// }
+public int GetNeighborIndices(int index, int chosenAction, int width, int height)
 {
+    // Calculate grid center (player's position)
+    int centerRow = height / 2;
+    int centerCol = width / 2;
+
+    // Calculate current enemy's row and column
     int row = index / width;
     int col = index % width;
 
-    int up = row > 0 ? index - width : -1;
-    int down = row < height - 1 ? index + width : -1;
-    int right = col < width - 1 ? index + 1 : -1;
-    int left = col > 0 ? index - 1 : -1;
-    int upLeft = (row > 0 && col > 0) ? index - width - 1 : -1;
-    int upRight = (row > 0 && col < width - 1) ? index - width + 1 : -1;
-    int downLeft = (row < height - 1 && col > 0) ? index + width - 1 : -1;
-    int downRight = (row < height - 1 && col < width - 1) ? index + width + 1 : -1;
+    // Compute the direction vector from the enemy to the center
+    int rowDirection = (int)math.sign(centerRow - row);
+    int colDirection = (int)math.sign(centerCol - col);
 
-    switch (chosenAction)
+    // Compute potential indices for each movement direction
+    int moveIndex = -1;
+
+    switch ((EnemyActionEnum)chosenAction)
     {
-        case 0: return up;
-        case 1: return down;
-        case 2: return right;
-        case 3: return left;
-        case 4: return upRight;
-        case 5: return upLeft;
-        case 6: return downRight;
-        case 7: return downLeft;
-        case 8: return index; // Stay action returns the same index
-        default: return -1;
+        case EnemyActionEnum.foward:
+            // Moving toward the center
+            moveIndex = index + (rowDirection * width) + colDirection;
+            break;
+        case EnemyActionEnum.backward:
+            // Moving away from the center
+            moveIndex = index - (rowDirection * width) - colDirection;
+            break;
+        case EnemyActionEnum.stepRight:
+            // Moving perpendicular to the left of the center
+            moveIndex = index + (-colDirection * width) + rowDirection;
+            break;
+        case EnemyActionEnum.stepLeft:
+            // Moving perpendicular to the right of the center
+            moveIndex = index + (colDirection * width) - rowDirection;
+            break;
+        case EnemyActionEnum.dash:
+            // Dash towards the center, move further than foward
+            moveIndex = index + 2 * ((rowDirection * width) + colDirection);
+            break;
     }
+
+    // Ensure that the calculated move is within the grid bounds
+    if (moveIndex < 0 || moveIndex >= width * height)
+    {
+        return -1; // Return an invalid index if out of bounds
+    }
+
+    return moveIndex;
 }
 
 private (int action, float value) SelectAction(int index, float epsilon, float3x3 possibleMovAction, int oldAction, int width, int height)
@@ -91,7 +141,7 @@ private (int action, float value) SelectAction(int index, float epsilon, float3x
 
     // Consider all actions valid except the inverse of the previous action
     // This simplistic approach does not account for "invalid" actions like moving into walls
-    for (int i = 0; i <= 8; i++)
+    for (int i = 0; i <= 3; i++)
     {
         if (i != oldAction && GetNeighborIndices(index, i, width, height) != -1)
         {
@@ -155,16 +205,24 @@ private (int index, float value) GetMaxValueActionFromValidActions(float3x3 qMat
     return (maxActionIndex, maxActionValue);
 }
 
-    public enum EnemyActionEnum
+    // public enum EnemyActionEnum
+    // {
+    //     Up,
+    //     Down,
+    //     Left,
+    //     Right,
+    //     UpRight,
+    //     UpLeft,
+    //     DownRight,
+    //     DownLeft,
+    //     Stay,
+    // }
+     public enum EnemyActionEnum
     {
-        Up,
-        Down,
-        Left,
-        Right,
-        UpRight,
-        UpLeft,
-        DownRight,
-        DownLeft,
-        Stay,
+        foward,
+        backward,
+        stepRight,
+        stepLeft,
+        dash
     }
 }

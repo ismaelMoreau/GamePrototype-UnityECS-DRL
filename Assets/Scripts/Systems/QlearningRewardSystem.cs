@@ -7,7 +7,7 @@ using Unity.Burst;
 using Random= Unity.Mathematics.Random;
 using Unity.Physics;
 
-[UpdateAfter(typeof(QlearningInitSystem))]
+[UpdateAfter(typeof(QlearningActionSelectionSystem))]
 public partial struct QlearningRewardSystem : ISystem
 {
     public void OnCreate(ref SystemState state){
@@ -31,19 +31,22 @@ public partial struct QlearningRewardSystem : ISystem
                     CollidesWith = (uint)CollisionLayer.enemies,  
                     GroupIndex = 0
                 });
-            //if(isHits){Debug.Log("is hit");}//TODO reduce player health}
+            if(isHits){Debug.Log("is hit");}//TODO reduce player health}
         }
         foreach(var hit in hits)
         {
+            
+            if (state.EntityManager.HasComponent<EnemyRewardComponent>(hit.Entity)){
+                var reward = SystemAPI.GetComponentRW<EnemyRewardComponent>(hit.Entity);
+                var enemyActionComponent = SystemAPI.GetComponentRW<EnemyActionComponent>(hit.Entity);
+                reward.ValueRW.earnReward = 1000;
+                enemyActionComponent.ValueRW.IsReadyToUpdateQtable = true;
+                //TODO reduce enemy health and move back and change color 
+            }
             if (state.EntityManager.HasComponent<DestroyTag>(hit.Entity))
             {
                 state.EntityManager.SetComponentEnabled<DestroyTag>(hit.Entity,true);
             }
-            // if (state.EntityManager.HasComponent<EnemyRewardComponent>(hit.Entity)){
-            //     var reward = SystemAPI.GetComponentRW<EnemyRewardComponent>(hit.Entity);
-            //     reward.ValueRW.earnReward = 10000;
-            //     //TODO reduce enemy health and move back and change color 
-            // }
         }
         hits.Dispose();
     }

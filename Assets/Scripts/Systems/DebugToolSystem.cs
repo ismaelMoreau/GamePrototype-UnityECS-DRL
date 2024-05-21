@@ -6,12 +6,17 @@ using Unity.Transforms;
 using System.Resources;
 using Unity.Collections;
 using Unity.VisualScripting;
+using System;
+using System.Reflection;
+using System.Collections.Generic;
+using Google.Protobuf.WellKnownTypes;
 
 [UpdateAfter(typeof(EnemyMovementSystem))]
 [CreateAfter(typeof(EnemyMovementSystem))]
     public partial struct DebugToolSystem : ISystem
     {
         private bool initialized;
+  
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
@@ -20,35 +25,66 @@ using Unity.VisualScripting;
             state.RequireForUpdate<QtableComponent>();
             state.RequireForUpdate<ConfigQlearnGrid>();
             initialized = false;
+        
         }
 
-      
+        public enum debugEnemyActionEnum
+        {
+            forward = 1,
+            backward = 2,
+            stepRight = 3,
+            stepLeft = 4,
+            dash = 5
+        }
+
         public void OnUpdate(ref SystemState state)
         {   
             var config = SystemAPI.GetSingleton<ConfigQlearnGrid>(); 
             var configEntity = SystemAPI.GetSingletonEntity<ConfigQlearnGrid>();
             var configManaged = state.EntityManager.GetComponentObject<ConfigManaged>(configEntity);
-            if (Input.GetKey(KeyCode.A)) {
+            bool shouldBreak = false;
+            foreach (debugEnemyActionEnum action in System.Enum.GetValues(typeof(debugEnemyActionEnum)))
+            {
+                
+                if (Input.GetKey(KeyCode.Alpha0+(int)action))
+                {
+                    if(initialized){configManaged.UIController.ClearTable();}
+                    
+                    HandleEnemyAction(action,configManaged,ref state);
+                    shouldBreak = true;
+                    break;
+                    // Only handle one action per frame
+                }
+                if(shouldBreak){break;}
+
+               
+            }
+            // if (Input.GetKey(KeyCode.Alpha2))//((int)action - 1)))
+            //     {
+            //         HandleEnemyAction(debugEnemyActionEnum.forward,configManaged,ref state);
+                    
+            //     }
+            // if (Input.GetKey(KeyCode.A)) {
             
                
-                if (!initialized)
-                {
-                    initialized = true;
+            //     if (!initialized)
+            //     {
+            //         initialized = true;
                
                 
-                    configManaged.UIController = GameObject.FindObjectOfType<UIController>();
-                    configManaged.UIController.GenerateTable();
-                    int index = 0;
-                    foreach(var Qtable in SystemAPI.Query<RefRO<QtableComponent>>()){
-                        configManaged.UIController.SetCellContentFlat(index,index.ToString()+": "+ Qtable.ValueRO.up.ToString("F2")+"/"+
-                        Qtable.ValueRO.down.ToString("F2")+"/"+
-                        Qtable.ValueRO.right.ToString("F2")+"/"+
-                        Qtable.ValueRO.left.ToString("F2"));
-                        index++;
-                    }
-                }
-            }
-            else if (Input.GetKey(KeyCode.Q)){
+            //         configManaged.UIController = GameObject.FindObjectOfType<UIController>();
+            //         configManaged.UIController.GenerateTable();
+            //         int index = 0;
+            //         foreach(var Qtable in SystemAPI.Query<RefRO<QtableComponent>>()){
+            //             configManaged.UIController.SetCellContentFlat(index,index.ToString()+": "+ Qtable.ValueRO.forward.ToString("F2")+"/");
+            //             // Qtable.ValueRO.down.ToString("F2")+"/"+
+            //             // Qtable.ValueRO.right.ToString("F2")+"/"+
+            //             // Qtable.ValueRO.left.ToString("F2"));
+            //             index++;
+            //         }
+            //     }
+            // }
+            if (Input.GetKey(KeyCode.P)){
                 
                 if (!initialized)
                 {
@@ -78,7 +114,7 @@ using Unity.VisualScripting;
                 int gridSizeZ = config.height;
                 float cellSize = config.cellSize; // Assuming each cell in the grid is defined by cellSize units
                 float3 bottomLeftPosition = centerPosition - new float3(gridSizeX * cellSize / 2, 0, gridSizeZ * cellSize / 2);
-                int y = 1; // To ensure visibility above ground
+                float y = 0.1f; // To ensure visibility above ground
 
                 // Line visibility duration
                 float lineDuration = SystemAPI.Time.DeltaTime; // Adjust as needed
@@ -135,12 +171,73 @@ using Unity.VisualScripting;
                     }
                 }
             }
-            else{
-                if(initialized){
-                    configManaged.UIController.ClearTable();
+            // else{
+            //     if(initialized){
+                if (Input.GetKey(KeyCode.Delete)){
+                     configManaged.UIController.ClearTable();
                     initialized = false;
                 }
-            }
+            // }
+        }
+        private void HandleEnemyAction(debugEnemyActionEnum action,ConfigManaged configManaged,ref SystemState state)
+        {
+                initialized=true;
+                configManaged.UIController = GameObject.FindObjectOfType<UIController>();
+                configManaged.UIController.SetTitle(action.ToString());
+                configManaged.UIController.GenerateTable();
+                int index = 0;
+                foreach (var Qtable in SystemAPI.Query<RefRO<QtableComponent>>())
+                {
+                    string content = GetActionContent(action, Qtable.ValueRO);
+                    
+                    configManaged.UIController.SetCellContentFlat(index, index.ToString() + ": " + content);
+                    index++;
+                }
+                
+            
+        }
+
+        private string GetActionContent(debugEnemyActionEnum action, QtableComponent qTable)
+        {
+            // // Get the name of the enum value
+            // string actionName = Enum.GetName(typeof(debugEnemyActionEnum), action);
+
+            // // Use reflection to dynamically generate content based on the enum value name
+            // PropertyInfo property = typeof(QtableComponent).GetProperty(actionName.ToLower());
+            // if (property != null)
+            // {
+            //     float value = (float)property.GetValue(qTable, null);
+            //     float indexQtables = (float)property.GetValue(index, null);
+            //     return value.ToString("F2") + "/";
+            // }
+            // else
+            // {
+            //     // Handle the case where the property corresponding to the enum value doesn't exist
+            //     return "Content not available";
+            // }
+            string value = "";
+            switch (action)
+        {
+            case debugEnemyActionEnum.forward:
+                value= qTable.forward.ToString("F2") + "/";
+                break;
+            case debugEnemyActionEnum.backward:
+                value= qTable.backward.ToString("F2") + "/";
+                break;
+            case debugEnemyActionEnum.stepRight:
+                value= qTable.stepRight.ToString("F2") + "/";
+                break;
+            case debugEnemyActionEnum.stepLeft:
+                value= qTable.stepLeft.ToString("F2") + "/";
+                break;
+            case debugEnemyActionEnum.dash:
+                value= qTable.dash.ToString("F2") + "/";
+                break;
+            default:
+                value= "";
+                break;
+        }
+        return value;
         }
     }
     

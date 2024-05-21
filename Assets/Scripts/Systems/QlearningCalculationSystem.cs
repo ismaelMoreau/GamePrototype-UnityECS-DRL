@@ -24,8 +24,8 @@ public partial struct QlearningCalculationSystem : ISystem
         // Populate qTables and qRewards
         foreach ((var QtableComponent,var QtableRewardComponent) in SystemAPI.Query<RefRO<QtableComponent>, RefRO<QtableRewardComponent>>())
         {
-            qTables.Add(new float3x3(QtableComponent.ValueRO.up,QtableComponent.ValueRO.down,QtableComponent.ValueRO.right,QtableComponent.ValueRO.left,
-                QtableComponent.ValueRO.upRight,QtableComponent.ValueRO.upLeft,QtableComponent.ValueRO.downRight,QtableComponent.ValueRO.downLeft,QtableComponent.ValueRO.stay));
+            qTables.Add(new float3x3(QtableComponent.ValueRO.forward,QtableComponent.ValueRO.backward,QtableComponent.ValueRO.stepRight,QtableComponent.ValueRO.stepLeft,
+                QtableComponent.ValueRO.dash,QtableComponent.ValueRO.upLeft,QtableComponent.ValueRO.downRight,QtableComponent.ValueRO.downLeft,QtableComponent.ValueRO.stay));
         
             qRewards.Add(QtableRewardComponent.ValueRO.reward);
         }
@@ -60,11 +60,11 @@ public partial struct QlearningCalculationSystem : ISystem
         foreach (var qtableComponent in SystemAPI.Query<RefRW<QtableComponent>>())
         {
             var qTable = qTables[indexQtable];
-            qtableComponent.ValueRW.up = qTable.c0.x;
-            qtableComponent.ValueRW.down = qTable.c0.y;
-            qtableComponent.ValueRW.right = qTable.c0.z;
-            qtableComponent.ValueRW.left = qTable.c1.x;
-            qtableComponent.ValueRW.upRight = qTable.c1.y;
+            qtableComponent.ValueRW.forward = qTable.c0.x;
+            qtableComponent.ValueRW.backward = qTable.c0.y;
+            qtableComponent.ValueRW.stepRight = qTable.c0.z;
+            qtableComponent.ValueRW.stepLeft = qTable.c1.x;
+            qtableComponent.ValueRW.dash = qTable.c1.y;
             qtableComponent.ValueRW.upLeft = qTable.c1.z;
             qtableComponent.ValueRW.downRight = qTable.c2.x;
             qtableComponent.ValueRW.downLeft = qTable.c2.y;

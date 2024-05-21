@@ -49,7 +49,7 @@ public partial struct PlayerInputSystem : ISystem
                playerTargetPosition.ValueRW.targetClickPosition = ray.GetPoint(dist);
             }
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha1))
+        else if (Input.GetKeyDown(KeyCode.Q))
         {
            
             

@@ -78,6 +78,7 @@ public partial struct ProcessSpawnerJob : IJobEntity
             Entity newEntity = Ecb.Instantiate(chunkIndex, spawner.Prefab);
             
             Ecb.SetComponent(chunkIndex, newEntity, LocalTransform.FromPosition(spawner.SpawnPosition));
+            //Ecb.SetComponent(chunkIndex, newEntity, LocalTransform.FromPositionRotation(spawner.SpawnPosition,new quaternion(new float4(-90,0,90,0))));
             //Ecb.SetComponent(chunkIndex,newEntity , new URPMaterialPropertyBaseColor { Value = RandomColor(ref rnd) });
             Ecb.SetComponent(chunkIndex,newEntity , new EnemyEpsilonComponent{ epsilon = startingEpsilon });
             // Resets the next spawn time.

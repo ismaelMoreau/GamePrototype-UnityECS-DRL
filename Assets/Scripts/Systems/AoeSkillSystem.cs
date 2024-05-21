@@ -41,7 +41,7 @@ public partial struct AOESkillSystem : ISystem
             state.EntityManager.SetComponentData(targetPrefab, new LocalTransform
             {
                 Position = playerTargetPosition.targetMousePosition,
-                Scale = 1,  // If we didn't set Scale and Rotation, they would default to zero (which is bad!)
+                Scale = skillsConfig.EffectRadius+1,  // If we didn't set Scale and Rotation, they would default to zero (which is bad!)
                 Rotation = quaternion.identity
             });
            return;
@@ -85,8 +85,8 @@ public partial struct AOESkillSystem : ISystem
     {
         var ecb = new EntityCommandBuffer(Allocator.TempJob);
 
-        foreach ((RefRO<LocalTransform> localTransform, RefRW<EnemyMovementComponent> enemy ,RefRW<URPMaterialPropertyBaseColor> color, Entity entity)
-                    in SystemAPI.Query<RefRO<LocalTransform>, RefRW<EnemyMovementComponent>,RefRW<URPMaterialPropertyBaseColor>>().WithEntityAccess())
+        foreach ((RefRO<LocalTransform> localTransform, RefRW<EnemyHealthComponent> enemy ,RefRW<URPMaterialPropertyBaseColor> color, Entity entity)
+                    in SystemAPI.Query<RefRO<LocalTransform>, RefRW<EnemyHealthComponent>,RefRW<URPMaterialPropertyBaseColor>>().WithEntityAccess())
         {
             float distance = math.distance(localTransform.ValueRO.Position, aoePosition);
           
@@ -96,11 +96,20 @@ public partial struct AOESkillSystem : ISystem
                 {
                     case AOEAction.Destroy:
 
-                        state.EntityManager.SetComponentEnabled<DestroyTag>(entity,true);
-                        
+                        //state.EntityManager.SetComponentEnabled<DestroyTag>(entity,true);
+                        enemy.ValueRW.currentEnnemyHealth -=35;
+                        if (SystemAPI.ManagedAPI.HasComponent<HealthBarUI>(entity))
+                        {
+                            SystemAPI.SetComponentEnabled<UpdateHealthBarUI>(entity, true);
+                        }
+                            //TODO death system
+                        if (enemy.ValueRW.currentEnnemyHealth <= 0)
+                        {
+                            state.EntityManager.SetComponentEnabled<DestroyTag>(entity,true);
+                        }
                         break;
                     case AOEAction.ChangeColor:
-                        // Assuming you have a component for color, e.g., EnemyColor
+                      
                        
                         color.ValueRW.Value = (Vector4)Color.red;
                         break;

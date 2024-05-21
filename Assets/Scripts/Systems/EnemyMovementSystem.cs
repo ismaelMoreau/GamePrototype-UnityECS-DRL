@@ -2,7 +2,9 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.Physics;
 using Unity.Collections;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 
 // [UpdateBefore(typeof(QlearningActionSelectionSystem))]
 [UpdateAfter(typeof(QlearningActionSelectionSystem))]
@@ -45,7 +47,7 @@ public partial struct EnemyMovementSystem : ISystem
         
         new EnemyDisableInGridJob
         {
-            PlayerPosition = playerPosition,
+            playerPosition = playerPosition,
             DeltaTime = SystemAPI.Time.DeltaTime,
             width = config.width,
             height = config.height,
@@ -57,7 +59,49 @@ public partial struct EnemyMovementSystem : ISystem
 
      
     }
-    
+    public static bool IsPositionInSquare(float3 position, float3 center,int width,int height,float cellSize)
+    {
+       // Define the half size of the square, 
+        float halfx = width*cellSize/2;
+        float halfz = height*cellSize/2;
+        float diffX = math.abs(position.x - center.x);
+        float diffZ = math.abs(position.z - center.z);
+        return diffX <= halfx && diffZ <= halfz;
+    }
+    public static int CalculateFlattenedGridPosition(float3 playerPosition, float3 enemyPosition, float cellSize, int width, int height)
+    {
+        // Calculate the relative position of the enemy to the player
+        float3 relativePosition = enemyPosition - playerPosition;
+
+        // Convert the world space relative position to grid coordinates
+        // Offset by half the grid dimensions to center the grid around the player
+        int gridX = (int)(math.floor(relativePosition.x / cellSize) + width / 2);
+        int gridZ = (int)(math.floor(relativePosition.z / cellSize) + height / 2);
+
+        // // Clamp gridX and gridZ to the grid dimensions to handle positions outside the grid
+        // gridX = math.clamp(gridX, 0, width - 1);
+        // gridZ = math.clamp(gridZ, 0, height - 1);
+
+        // Calculate the flattened grid position using the width for row-major order indexing
+        int flattenedIndex = gridZ * width + gridX;
+
+        return flattenedIndex;
+    }
+    public static float3 CalculateWorldPositionFromFlattenedGrid(int flattenedIndex, float3 playerPosition, float cellSize, int width, int height)
+    {
+        // Calculate the grid position from the flattened index
+        int gridZ = flattenedIndex / width;
+        int gridX = flattenedIndex % width;
+
+        // Calculate the position relative to the player
+        float relativeX = (gridX - width / 2) * cellSize;
+        float relativeZ = (gridZ - height / 2) * cellSize;
+
+        // Calculate the world position by adding the relative position to the player position
+        float3 worldPosition = playerPosition + new float3(relativeX, 0f, relativeZ);
+
+        return worldPosition;
+    }
 }
 // Job to move enemies towards the player
 [WithNone(typeof(EnemyActionComponent))]
@@ -69,17 +113,19 @@ public partial struct EnemyMoveTowardsPlayerJob : IJobEntity
     //public float CollisionRadius;
 
     public EntityCommandBuffer.ParallelWriter ECB;
-    public float height;
-    public float width;
+    public int height;
+    public int width;
 
     public float cellSize;
 
     public void Execute(Entity entity,[ChunkIndexInQuery]int index, ref LocalTransform localTransform, in EnemyMovementComponent enemy)
     {
-        if(!IsPositionInSquare(localTransform.Position,PlayerPosition)){
+        if(!EnemyMovementSystem.IsPositionInSquare(localTransform.Position,PlayerPosition,width,height,cellSize)){
             float3 direction = math.normalize(PlayerPosition - localTransform.Position);
             float distance = math.distance(PlayerPosition, localTransform.Position);
             localTransform.Position += direction * enemy.speed * DeltaTime;
+            localTransform.Rotation = quaternion.LookRotationSafe(direction, math.up());
+                
         }
         else
         {
@@ -87,20 +133,11 @@ public partial struct EnemyMoveTowardsPlayerJob : IJobEntity
         }
        
     }
-    bool IsPositionInSquare(float3 position, float3 center)
-    {
-        // Define the half size of the square, 
-        float halfx = width*cellSize/2;
-        float halfz = height*cellSize/2;
-        float diffX = math.abs(position.x - center.x);
-        float diffZ = math.abs(position.z - center.z);
-        return diffX <= halfx && diffZ <= halfz;
-    }
 } 
 [BurstCompile] 
 public partial struct EnemyDisableInGridJob : IJobEntity
 {
-    public float3 PlayerPosition;
+    public float3 playerPosition;
     public float DeltaTime;
     //public float CollisionRadius;
 
@@ -111,18 +148,22 @@ public partial struct EnemyDisableInGridJob : IJobEntity
     
 
     public void Execute(Entity entity,[ChunkIndexInQuery]int index, ref LocalTransform localTransform, in EnemyMovementComponent enemy
-        ,EnabledRefRW<EnemyActionComponent> enemyGridEnableRef,ref EnemyActionComponent EnemyActionComponent, ref EnemyActionTimerComponent enemyActionTimerComponent)
+        ,EnabledRefRW<EnemyActionComponent> enemyGridEnableRef,ref EnemyActionComponent EnemyActionComponent, ref EnemyActionTimerComponent enemyActionTimerComponent
+        ,ref EnemyRewardComponent enemyRewardComponent,ref PhysicsVelocity velocity)
     {
-        if(!IsPositionInSquare(localTransform.Position,PlayerPosition)){
-           EnemyActionComponent.isDoingAction = false; 
-           enemyGridEnableRef.ValueRW = false;
+        velocity.Linear = float3.zero;
+        velocity.Angular = float3.zero;
+        if(!EnemyMovementSystem.IsPositionInSquare(localTransform.Position,playerPosition,width,height,cellSize)){
+            EnemyActionComponent.isDoingAction = false; 
+            enemyGridEnableRef.ValueRW = false;
+        
         }
         else
         {
-            var actualPosition = CalculateFlattenedGridPosition(PlayerPosition,localTransform.Position,cellSize,width,height);
+            var actualPosition = EnemyMovementSystem.CalculateFlattenedGridPosition(playerPosition,localTransform.Position,cellSize,width,height);
             
             // Calculate the direction to the player and ensure the enemy faces the player
-            float3 playerDirection = math.normalize(PlayerPosition - localTransform.Position);
+            float3 playerDirection = math.normalize(playerPosition - localTransform.Position);
             localTransform.Rotation = quaternion.LookRotationSafe(playerDirection, math.up());
 
             EnemyActionComponent.gridFlatenPosition = actualPosition;
@@ -135,17 +176,22 @@ public partial struct EnemyDisableInGridJob : IJobEntity
                 {
                     // Action completed
                     EnemyActionComponent.isDoingAction = false;
-                    // if player moved
-                    if (actualPosition == EnemyActionComponent.nextActionGridFlatenPosition)
-                        { EnemyActionComponent.IsReadyToUpdateQtable = true; }
                     
+                    if (actualPosition != EnemyActionComponent.nextActionGridFlatenPosition)
+                    {                        
+                        // Far from the next action position, give negative reward proportional to the distance
+                        var enemyNextActionWorldPosition = EnemyMovementSystem.CalculateWorldPositionFromFlattenedGrid(EnemyActionComponent.nextActionGridFlatenPosition,playerPosition,cellSize,width,height);
+                        var enemyActualWorldPosition = EnemyMovementSystem.CalculateWorldPositionFromFlattenedGrid(actualPosition,playerPosition,cellSize,width,height);
+                        enemyRewardComponent.earnReward -= math.distance(enemyNextActionWorldPosition, enemyActualWorldPosition);
+                    }
+                    EnemyActionComponent.IsReadyToUpdateQtable = true;
                     enemyActionTimerComponent.actionTimer = 0f;
                 }
                 else
                 {
                     float3 moveDirection = new float3(0, 0, 0);
                     float speedMultiplier = 1.0f; // Default multiplier
-
+                 
                     switch (EnemyActionComponent.chosenAction)
                     {
                         case 0: // Move toward the player
@@ -175,34 +221,6 @@ public partial struct EnemyDisableInGridJob : IJobEntity
                 }
             }
         }
-    }
-    bool IsPositionInSquare(float3 position, float3 center)
-    {
-       // Define the half size of the square, 
-        float halfx = width*cellSize/2;
-        float halfz = height*cellSize/2;
-        float diffX = math.abs(position.x - center.x);
-        float diffZ = math.abs(position.z - center.z);
-        return diffX <= halfx && diffZ <= halfz;
-    }
-    int CalculateFlattenedGridPosition(float3 playerPosition, float3 enemyPosition, float cellSize, int width, int height)
-    {
-        // Calculate the relative position of the enemy to the player
-        float3 relativePosition = enemyPosition - playerPosition;
-
-        // Convert the world space relative position to grid coordinates
-        // Offset by half the grid dimensions to center the grid around the player
-        int gridX = (int)(math.floor(relativePosition.x / cellSize) + width / 2);
-        int gridZ = (int)(math.floor(relativePosition.z / cellSize) + height / 2);
-
-        // // Clamp gridX and gridZ to the grid dimensions to handle positions outside the grid
-        // gridX = math.clamp(gridX, 0, width - 1);
-        // gridZ = math.clamp(gridZ, 0, height - 1);
-
-        // Calculate the flattened grid position using the width for row-major order indexing
-        int flattenedIndex = gridZ * width + gridX;
-
-        return flattenedIndex;
     }
 
 
@@ -253,6 +271,8 @@ public partial struct EnemyDisableInGridJob : IJobEntity
    
 
 } 
+
+  
 
 
 

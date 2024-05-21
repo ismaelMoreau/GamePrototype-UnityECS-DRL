@@ -25,8 +25,8 @@ public partial struct QlearningActionSelectionSystem : ISystem
 
         foreach (var QtableComponent in SystemAPI.Query<RefRO<QtableComponent>>())
         {
-            qTables.Add(new float3x3(QtableComponent.ValueRO.up,QtableComponent.ValueRO.down,QtableComponent.ValueRO.right,QtableComponent.ValueRO.left,
-            QtableComponent.ValueRO.upRight,QtableComponent.ValueRO.upLeft,QtableComponent.ValueRO.downRight,QtableComponent.ValueRO.downLeft,QtableComponent.ValueRO.stay));
+            qTables.Add(new float3x3(QtableComponent.ValueRO.forward,QtableComponent.ValueRO.backward,QtableComponent.ValueRO.stepRight,QtableComponent.ValueRO.stepLeft,
+            QtableComponent.ValueRO.dash,QtableComponent.ValueRO.upLeft,QtableComponent.ValueRO.downRight,QtableComponent.ValueRO.downLeft,QtableComponent.ValueRO.stay));
         }
 
         foreach ((var enemy,var enemyActiontimer, var enemyEpsilon) in SystemAPI.Query<RefRW<EnemyActionComponent>,RefRW<EnemyActionTimerComponent>,RefRW<EnemyEpsilonComponent>>())
@@ -141,7 +141,7 @@ private (int action, float value) SelectAction(int index, float epsilon, float3x
 
     // Consider all actions valid except the inverse of the previous action
     // This simplistic approach does not account for "invalid" actions like moving into walls
-    for (int i = 0; i <= 3; i++)
+    for (int i = 0; i <= 4; i++)
     {
         if (i != oldAction && GetNeighborIndices(index, i, width, height) != -1)
         {
@@ -174,15 +174,15 @@ private float ExtractActionValue(float3x3 qMatrix, int action)
 {
     switch (action)
     {
-        case 0: return qMatrix.c0.x; // Up
-        case 1: return qMatrix.c0.y; // Down
-        case 2: return qMatrix.c0.z; // Left
-        case 3: return qMatrix.c1.x; // Right
-        case 4: return qMatrix.c1.y; // UpRight
-        case 5: return qMatrix.c1.z; // UpLeft
-        case 6: return qMatrix.c2.x; // DownRight
-        case 7: return qMatrix.c2.y; // DownLeft
-        case 8: return qMatrix.c2.z; // Stay
+        case 0: return qMatrix.c0.x; 
+        case 1: return qMatrix.c0.y; 
+        case 2: return qMatrix.c0.z; 
+        case 3: return qMatrix.c1.x; 
+        case 4: return qMatrix.c1.y; 
+        case 5: return qMatrix.c1.z; 
+        case 6: return qMatrix.c2.x; 
+        case 7: return qMatrix.c2.y; 
+        case 8: return qMatrix.c2.z; 
         default: return 0f; // Should not happen
     }
 }
@@ -217,12 +217,13 @@ private (int index, float value) GetMaxValueActionFromValidActions(float3x3 qMat
     //     DownLeft,
     //     Stay,
     // }
-     public enum EnemyActionEnum
-    {
-        foward,
-        backward,
-        stepRight,
-        stepLeft,
-        dash
-    }
+
+}
+public enum EnemyActionEnum
+{
+foward,
+backward,
+stepRight,
+stepLeft,
+dash
 }

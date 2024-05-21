@@ -5,17 +5,23 @@ public class UIController : MonoBehaviour
 {
     public UIDocument uiDocument; // Assign your UIDocument in the Inspector
     private VisualElement tableContainer;
+    private VisualElement tableContentContainer; // Container for table content
 
     private void Start()
     {
         var rootVisualElement = uiDocument.rootVisualElement;
-        tableContainer = rootVisualElement.Q<VisualElement>("tableContainer");  
+        tableContainer = rootVisualElement.Q<VisualElement>("tableContainer");
+
+        // Create and add the table content container
+        tableContentContainer = new VisualElement();
+        tableContentContainer.name = "tableContentContainer";
+        tableContainer.Add(tableContentContainer);
     }
 
     public void GenerateTable()
     {
-        // Ensure the container is clear before generating the table
-        tableContainer.Clear();
+        // Ensure the table content container is clear before generating the table
+        tableContentContainer.Clear();
 
         var table = new VisualElement();
         table.name = "dynamicTable"; // Name the table for easier querying
@@ -40,18 +46,19 @@ public class UIController : MonoBehaviour
             table.Add(row);
         }
 
-        tableContainer.Add(table);
+        tableContentContainer.Add(table);
     }
+
     public void ClearTable()
     {
-        // Clears all children from the table container
-        tableContainer.Clear();
+        // Clears all children from the table content container
+        tableContentContainer.Clear();
     }
-   
+
     public void SetCellContent(int rowIndex, int columnIndex, string content)
     {
         var cellName = $"cell_{rowIndex}_{columnIndex}";
-        var cell = tableContainer.Q<Label>(cellName);
+        var cell = tableContentContainer.Q<Label>(cellName);
         if (cell != null)
         {
             cell.text = content;
@@ -61,11 +68,12 @@ public class UIController : MonoBehaviour
             Debug.LogError($"Cell at [{rowIndex}, {columnIndex}] not found.");
         }
     }
+
     public void SetCellContentFlat(int index, string content)
     {
         if (index < 0 || index >= 400) // Ensure the index is within bounds
         {
-            Debug.LogError($"Index out of bounds: {index}");
+            Debug.LogError($"UIcontroller Index out of bounds: {index}");
             return;
         }
 
@@ -74,4 +82,23 @@ public class UIController : MonoBehaviour
         SetCellContent(row, col, content); // Utilize the existing method for setting content
     }
 
+    public void SetTitle(string titleText)
+    {
+        // Remove any existing title
+        var existingTitle = tableContainer.Q<Label>("tableTitle");
+        if (existingTitle != null)
+        {
+            tableContainer.Remove(existingTitle);
+        }
+
+        var title = new Label(titleText);
+        title.name = "tableTitle"; // Name the title for easier querying
+        title.style.unityFontStyleAndWeight = FontStyle.Bold;
+        title.style.fontSize = 20;
+        title.style.marginBottom = 10;
+        title.style.unityTextAlign = TextAnchor.MiddleCenter;
+
+        // Insert the title at the top
+        tableContainer.Insert(0, title);
+    }
 }

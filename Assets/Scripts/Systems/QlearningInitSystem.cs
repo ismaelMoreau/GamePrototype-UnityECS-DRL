@@ -18,8 +18,8 @@ public partial struct QlearningInitSystem : ISystem
     public void OnUpdate(ref SystemState state){
         
 
-         
-       state.Enabled = false;
+        //this ensure only one update
+        state.Enabled = false;
         
         var configQlearn =  SystemAPI.GetSingleton<ConfigQlearn>();
         
@@ -59,13 +59,13 @@ public partial struct QlearningInitSystem : ISystem
         foreach (var QtablePossibleAction in SystemAPI.Query<RefRW<QtableComponent>>())
         {
             // Original directions
-            QtablePossibleAction.ValueRW.up = 0.1f; // random.NextFloat(0.0f, 0.001f);
-            QtablePossibleAction.ValueRW.down = 0.1f; // random.NextFloat(0.0f, 0.001f);
-            QtablePossibleAction.ValueRW.left = 0.1f; // random.NextFloat(0.0f, 0.001f);
-            QtablePossibleAction.ValueRW.right = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.forward = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.backward = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.stepLeft = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.stepRight = 0.1f; // random.NextFloat(0.0f, 0.001f);
 
             // Diagonal directions
-            QtablePossibleAction.ValueRW.upRight = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.dash = 0.1f; // random.NextFloat(0.0f, 0.001f);
             QtablePossibleAction.ValueRW.upLeft = 0.1f; // random.NextFloat(0.0f, 0.001f);
             QtablePossibleAction.ValueRW.downRight = 0.1f; // random.NextFloat(0.0f, 0.001f);
             QtablePossibleAction.ValueRW.downLeft = 0.1f; // random.NextFloat(0.0f, 0.001f);

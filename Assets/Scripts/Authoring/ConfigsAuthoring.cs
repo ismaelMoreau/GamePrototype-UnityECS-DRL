@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Mathematics;
 using Random= Unity.Mathematics.Random;
+using UnityEditor.Rendering;
 
 public class ConfigsAuthoring : MonoBehaviour
 {   
@@ -25,6 +26,8 @@ public class ConfigsAuthoring : MonoBehaviour
     public float gamma = 0.8f;
 
     public bool isInitQlearning = false;
+    public float triggerCooldownTimer = 0f;
+    public float hitTriggerCooldownDuration =1.5f;
 
     private class Baker : Baker<ConfigsAuthoring>{
         public override void Bake(ConfigsAuthoring authoring)
@@ -51,38 +54,12 @@ public class ConfigsAuthoring : MonoBehaviour
                 random = new Random(123),
                 isInitQlearning = authoring.isInitQlearning
             });
+            AddComponent(entity, new HitTriggerConfigComponent{
+                triggerCooldownTimer = authoring.triggerCooldownTimer,
+                hitTriggerCooldownDuration = authoring.hitTriggerCooldownDuration
+            });
         }
     }
 }
 
-public struct SkillsConfig: IComponentData
-{
-    public Entity PrefabAoe;
-    public float EffectRadius;
-    public float Damage;
-    public double LastUsedTime;
-    public float Cooldown;
 
-}
-public class ConfigManaged : IComponentData
-{
-    public UIController UIController;
-}
-public struct ConfigQlearnGrid : IComponentData
-{
-    public int height;
-    public int width;
-
-    public float cellSize;
-}
-public struct ConfigQlearn : IComponentData
-{
-    public float sartingEpsilon;
-    public float alpha;
-    public float gamma;
-
-    public Random random;
-
-    public bool isInitQlearning;
-
-}

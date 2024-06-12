@@ -12,7 +12,7 @@ using UnityEngine.UI;
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             
             // Initialize health bars for new entities that need them
-            foreach (var (EnemyHealthComponent, transform, healthBarOffset, entity) in SystemAPI.Query<EnemyHealthComponent, 
+            foreach (var (HealthComponent, transform, healthBarOffset, entity) in SystemAPI.Query<HealthComponent, 
                          LocalTransform, HealthBarOffset>().WithNone<HealthBarUI>().WithEntityAccess())
             {
                 var healthBarPrefab = SystemAPI.ManagedAPI.GetSingleton<DamageGameObjectPrefabs>().HealthBarUIPrefab;
@@ -21,8 +21,8 @@ using UnityEngine.UI;
 
                 var healthBarSlider = newHealthBar.GetComponentInChildren<Slider>();
                 healthBarSlider.minValue = 0;
-                healthBarSlider.maxValue = EnemyHealthComponent.MaxEnnemyHealth;
-                healthBarSlider.value = EnemyHealthComponent.MaxEnnemyHealth;
+                healthBarSlider.maxValue = HealthComponent.maxHealth;
+                healthBarSlider.value = HealthComponent.maxHealth;
 
                 ecb.AddComponent(entity, new HealthBarUI { Value = newHealthBar });
             }
@@ -46,14 +46,16 @@ using UnityEngine.UI;
             }
             
             // Update the values of the health bar for entities that need it updated
-            foreach (var (healthBarUI, EnemyHealthComponent, entity) in SystemAPI.Query<HealthBarUI, EnemyHealthComponent>().WithAll<UpdateHealthBarUI>().WithEntityAccess())
+            foreach (var (healthBarUI, EnemyHealthComponent, entity) in SystemAPI.Query<HealthBarUI, HealthComponent>().WithAll<UpdateHealthBarUI>().WithEntityAccess())
             {
                 var healthBarSlider = healthBarUI.Value.GetComponentInChildren<Slider>();
                 healthBarSlider.minValue = 0;
-                healthBarSlider.maxValue = EnemyHealthComponent.MaxEnnemyHealth;
-                healthBarSlider.value = EnemyHealthComponent.currentEnnemyHealth;
+                healthBarSlider.maxValue = EnemyHealthComponent.maxHealth;
+                healthBarSlider.value = EnemyHealthComponent.currentHealth;
 
                 state.EntityManager.SetComponentEnabled<UpdateHealthBarUI>(entity, false);
             }
+            
+            ecb.Dispose();
         }
     }

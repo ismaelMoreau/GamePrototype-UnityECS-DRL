@@ -11,8 +11,8 @@ using System.Reflection;
 using System.Collections.Generic;
 using Google.Protobuf.WellKnownTypes;
 
-[UpdateAfter(typeof(EnemyMovementSystem))]
-[CreateAfter(typeof(EnemyMovementSystem))]
+[UpdateAfter(typeof(TransformSystemGroup))]
+[CreateAfter(typeof(TransformSystemGroup))]
     public partial struct DebugToolSystem : ISystem
     {
         private bool initialized;
@@ -219,7 +219,7 @@ using Google.Protobuf.WellKnownTypes;
             switch (action)
         {
             case debugEnemyActionEnum.forward:
-                value= qTable.forward.ToString("F2") + "/";
+                value= qTable.forward.ToString("F2") + "/" ;
                 break;
             case debugEnemyActionEnum.backward:
                 value= qTable.backward.ToString("F2") + "/";
@@ -237,7 +237,7 @@ using Google.Protobuf.WellKnownTypes;
                 value= "";
                 break;
         }
-        return value;
+        return value;//+ "  i="+qTable.indexOfQtableComponent;
         }
     }
     

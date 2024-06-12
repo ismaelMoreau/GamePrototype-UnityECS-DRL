@@ -28,5 +28,6 @@ using UnityEngine;
             // Adjust the camera's position to be behind and slightly above the player
             cam.position = playerPosition + new float3(0, 6, -10); // You can adjust these values to your preference
             cam.LookAt(playerPosition); 
+
         }
     }

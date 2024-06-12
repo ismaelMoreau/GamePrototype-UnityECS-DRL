@@ -5,6 +5,8 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Burst;
 using Random = Unity.Mathematics.Random;
+using Unity.VisualScripting;
+using Unity.MLAgents.Actuators;
 
 [UpdateAfter(typeof(QlearningRewardSystem))]
 public partial struct QlearningCalculationSystem : ISystem
@@ -12,6 +14,7 @@ public partial struct QlearningCalculationSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<ConfigQlearn>();
+        state.RequireForUpdate<EnemyActionComponent>();
     }
 
     public void OnUpdate(ref SystemState state)
@@ -25,36 +28,40 @@ public partial struct QlearningCalculationSystem : ISystem
         foreach ((var QtableComponent,var QtableRewardComponent) in SystemAPI.Query<RefRO<QtableComponent>, RefRO<QtableRewardComponent>>())
         {
             qTables.Add(new float3x3(QtableComponent.ValueRO.forward,QtableComponent.ValueRO.backward,QtableComponent.ValueRO.stepRight,QtableComponent.ValueRO.stepLeft,
-                QtableComponent.ValueRO.dash,QtableComponent.ValueRO.upLeft,QtableComponent.ValueRO.downRight,QtableComponent.ValueRO.downLeft,QtableComponent.ValueRO.stay));
+                QtableComponent.ValueRO.dash,QtableComponent.ValueRO.block,QtableComponent.ValueRO.heal,QtableComponent.ValueRO.jump,QtableComponent.ValueRO.stay));
         
             qRewards.Add(QtableRewardComponent.ValueRO.reward);
         }
 
         // Calculate new Q-values
-        foreach ((var enemyActionComponent, var enemyRewardComponent) in SystemAPI.Query<RefRW<EnemyActionComponent>, RefRW<EnemyRewardComponent>>())
+        foreach ((var enemyActionComponent, var enemyRewardComponent, var actionBuffer) in SystemAPI.Query<RefRW<EnemyActionComponent>, RefRW<EnemyRewardComponent> ,DynamicBuffer<EnemyActionBufferElement>>())
         {
             if (enemyActionComponent.ValueRO.IsReadyToUpdateQtable){
-                var qTable = qTables[enemyActionComponent.ValueRO.gridFlatenPosition];
-                var reward = qRewards[enemyActionComponent.ValueRO.gridFlatenPosition]+ enemyRewardComponent.ValueRO.earnReward;
-                if(enemyRewardComponent.ValueRO.earnReward != 0){
-                    enemyRewardComponent.ValueRW.earnReward= 0;
+                for (int i = 0; i < actionBuffer.Length -1; i++){
+                    var action = actionBuffer[i];
+                    var nextAction = actionBuffer[i+1];
+                    var qTable = qTables[enemyActionComponent.ValueRO.gridFlatenPosition];
+                    var reward = qRewards[enemyActionComponent.ValueRO.gridFlatenPosition]+ enemyRewardComponent.ValueRO.earnReward;
+                    if(enemyRewardComponent.ValueRO.earnReward != 0){
+                        enemyRewardComponent.ValueRW.earnReward= 0;
+                    }
+                    var discountFactor = qlearnConfig.gamma;
+                    var learningRate = qlearnConfig.alpha;
+                    var penalty = enemyActionComponent.ValueRO.numberOfSteps * -0.1f; 
+                    
+                    // Q-Learning formula
+                    var oldValue = action.actionValue;//ExtractActionValue(qTable, enemyActionComponent.ValueRO.chosenAction);
+                    var newValue = oldValue + learningRate * (reward + penalty + discountFactor * nextAction.actionValue - oldValue);
+
+                    // Update the Q-value in the matrix
+                    qTable = UpdateActionValue(qTable, action.action, newValue);
+                    qTables[enemyActionComponent.ValueRO.gridFlatenPosition] = qTable;
+
+                    enemyActionComponent.ValueRW.IsReadyToUpdateQtable = false;
                 }
-                var discountFactor = qlearnConfig.gamma;
-                var learningRate = qlearnConfig.alpha;
-                var penalty = enemyActionComponent.ValueRO.numberOfSteps * -0.1f; 
-                
-                // Q-Learning formula
-                var oldValue = ExtractActionValue(qTable, enemyActionComponent.ValueRO.chosenAction);
-                var newValue = oldValue + learningRate * (reward + penalty + discountFactor * enemyActionComponent.ValueRO.chosenNextActionQvalue - oldValue);
-
-                // Update the Q-value in the matrix
-                qTable = UpdateActionValue(qTable, enemyActionComponent.ValueRO.chosenAction, newValue);
-                qTables[enemyActionComponent.ValueRO.gridFlatenPosition] = qTable;
-
-                enemyActionComponent.ValueRW.IsReadyToUpdateQtable = false;
             }
         }
-
+    
         // Assign updated Q-values back to QtableComponents
         int indexQtable = 0;
         foreach (var qtableComponent in SystemAPI.Query<RefRW<QtableComponent>>())
@@ -65,9 +72,9 @@ public partial struct QlearningCalculationSystem : ISystem
             qtableComponent.ValueRW.stepRight = qTable.c0.z;
             qtableComponent.ValueRW.stepLeft = qTable.c1.x;
             qtableComponent.ValueRW.dash = qTable.c1.y;
-            qtableComponent.ValueRW.upLeft = qTable.c1.z;
-            qtableComponent.ValueRW.downRight = qTable.c2.x;
-            qtableComponent.ValueRW.downLeft = qTable.c2.y;
+            qtableComponent.ValueRW.block = qTable.c1.z;
+            qtableComponent.ValueRW.heal = qTable.c2.x;
+            qtableComponent.ValueRW.jump = qTable.c2.y;
             qtableComponent.ValueRW.stay = qTable.c2.z;
 
             indexQtable++;

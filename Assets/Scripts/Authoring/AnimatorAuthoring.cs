@@ -16,23 +16,14 @@ public class AnimatorAuthor : MonoBehaviour
                 AnimatorGameObject = authoring.Animator.gameObject
             });
 
-            // if (IsBakingForEditor())
-            // {
-            //     AddComponent(entity, new EditorAnimatorVisualEntityPrefab
-            //     {
-            //         Prefab = GetEntity(authoring.Animator.gameObject, TransformUsageFlags.Dynamic)
-            //     });
-            // }
+            if (IsBakingForEditor())
+            {
+                AddComponent(entity, new EditorAnimatorVisualEntityPrefab
+                {
+                    Prefab = GetEntity(authoring.Animator.gameObject, TransformUsageFlags.Dynamic)
+                });
+            }
         }
     }
 }
 #endif
-struct AnimatorInstantiationData : IComponentData
-{
-    public UnityObjectRef<GameObject> AnimatorGameObject;
-}
-
-class AnimatorCleanup : ICleanupComponentData
-{
-    public Animator DestroyThisAnimator;
-}

@@ -48,7 +48,7 @@ public partial struct QlearningInitSystem : ISystem
                 float reward = minReward + (maxReward - minReward) * ((float)(maxDistance - distanceFromCenter) / maxDistance);
                  if (x >= (centerX - regionSize) && x <= (centerX + regionSize) && 
                     z >= (centerZ - regionSize) && z <= (centerZ + regionSize)) {
-                   reward = 0f; // Set reward to 1000 for cells within the defined square
+                   reward = 1f; // Set reward to 1 for cells within the defined square
                 }
                
                 var rewardComponent = new QtableRewardComponent { reward = reward };
@@ -66,9 +66,9 @@ public partial struct QlearningInitSystem : ISystem
 
             // Diagonal directions
             QtablePossibleAction.ValueRW.dash = 0.1f; // random.NextFloat(0.0f, 0.001f);
-            QtablePossibleAction.ValueRW.upLeft = 0.1f; // random.NextFloat(0.0f, 0.001f);
-            QtablePossibleAction.ValueRW.downRight = 0.1f; // random.NextFloat(0.0f, 0.001f);
-            QtablePossibleAction.ValueRW.downLeft = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.block = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.heal = 0.1f; // random.NextFloat(0.0f, 0.001f);
+            QtablePossibleAction.ValueRW.jump = 0.1f; // random.NextFloat(0.0f, 0.001f);
 
             // Stay in place
             QtablePossibleAction.ValueRW.stay = 0.1f; // random.NextFloat(0.0f, 0.001f);

@@ -33,14 +33,14 @@ public partial struct OptimizedSpawnerSystem : ISystem
         }
        
         EntityCommandBuffer.ParallelWriter ecb = GetEntityCommandBuffer(ref state);
-        Random rnd = new Random(123);
+        //Random rnd = new Random(123);
         // Creates a new instance of the job, assigns the necessary data, and schedules the job in parallel.
         
         new ProcessSpawnerJob
         {
             ElapsedTime = SystemAPI.Time.ElapsedTime,
             Ecb = ecb,
-            rnd = rnd,
+            //rnd = rnd,
             startingEpsilon = configQlearn.sartingEpsilon
         }.ScheduleParallel();
         state.Dependency.Complete();   
@@ -61,7 +61,7 @@ public partial struct ProcessSpawnerJob : IJobEntity
     public EntityCommandBuffer.ParallelWriter Ecb;
     public double ElapsedTime;
 
-    public Random rnd;
+    //public Random rnd;
     public float startingEpsilon; 
     // IJobEntity generates a component data query based on the parameters of its `Execute` method.
     // This example queries for all Spawner components and uses `ref` to specify that the operation

@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+using System.Threading;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -12,17 +13,27 @@ public partial struct DetectTriggerSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SimulationSingleton>();
+        state.RequireForUpdate<EnemyActionComponent>();
+        state.RequireForUpdate<PlayerMovementComponent>();
+        state.RequireForUpdate<HitTriggerConfigComponent>();
+        
     }
 
     public void OnUpdate(ref SystemState state)
     {
+        var config = SystemAPI.GetSingleton<HitTriggerConfigComponent>(); 
         var detectTriggerJob = new DetectTriggerJob
         {
+            
             HitBufferLookup = SystemAPI.GetBufferLookup<HitBufferElement>(),
-            enemyHitPointsLookup = SystemAPI.GetComponentLookup<EnemyHealthComponent>(),
-            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>()
-        };
+            enemyHitPointsLookup = SystemAPI.GetComponentLookup<EnemyActionComponent>(),
+            playerMouvement = SystemAPI.GetComponentLookup<PlayerMovementComponent>(),
+            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(),
+            cooldownTimer =  config.triggerCooldownTimer,
+            cooldownDuration = config.hitTriggerCooldownDuration
 
+        };
+        
         var simSingleton = SystemAPI.GetSingleton<SimulationSingleton>();
         state.Dependency = detectTriggerJob.Schedule(simSingleton, state.Dependency);
     }
@@ -31,7 +42,10 @@ public partial struct DetectTriggerSystem : ISystem
 public struct DetectTriggerJob : ITriggerEventsJob
 {
     public BufferLookup<HitBufferElement> HitBufferLookup;
-    [ReadOnly] public ComponentLookup<EnemyHealthComponent> enemyHitPointsLookup;
+    public float cooldownTimer ;
+    public float cooldownDuration ;
+    [ReadOnly] public ComponentLookup<EnemyActionComponent> enemyHitPointsLookup;
+    [ReadOnly] public ComponentLookup<PlayerMovementComponent> playerMouvement;
     [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
     
     public void Execute(TriggerEvent triggerEvent)
@@ -52,17 +66,26 @@ public struct DetectTriggerJob : ITriggerEventsJob
             triggerEntity = triggerEvent.EntityB;
             hitEntity = triggerEvent.EntityA;
         }
+        else if(HitBufferLookup.HasBuffer(triggerEvent.EntityA) && playerMouvement.HasComponent(triggerEvent.EntityB)){
+            triggerEntity = triggerEvent.EntityA;
+            hitEntity = triggerEvent.EntityB;
+        }
+        else if(HitBufferLookup.HasBuffer(triggerEvent.EntityB) && playerMouvement.HasComponent(triggerEvent.EntityA)){
+            triggerEntity = triggerEvent.EntityB;
+            hitEntity = triggerEvent.EntityA;
+        }
         else
         {
             return;
         }
 
-        // Determine if the hit entity is already added to the trigger entity's hit buffer 
-        // var hitBuffer = HitBufferLookup[triggerEntity];
-        // foreach (var hit in hitBuffer)
-        // {
-        //     if (hit.HitEntity == hitEntity) return;
-        // }
+        //Determine if the hit entity is already added to the trigger entity's hit buffer 
+        var hitBuffer = HitBufferLookup[triggerEntity];
+        foreach (var hit in hitBuffer)
+        {
+            
+            if (hit.HitEntity == hitEntity) return;
+        }
         
         // Need to estimate position and normal as TriggerEvent does not have these details unlike CollisionEvent
         var triggerEntityPosition = TransformLookup[triggerEntity].Position;
@@ -75,8 +98,11 @@ public struct DetectTriggerJob : ITriggerEventsJob
         {
             IsHandled = false,
             HitEntity = hitEntity,
+            triggerEntity = triggerEntity,
             Position = hitPosition,
-            Normal = hitNormal
+            Normal = hitNormal,
+            cooldownTimer = cooldownTimer,
+            cooldownDuration = cooldownDuration 
         };
 
         HitBufferLookup[triggerEntity].Add(newHitElement);
@@ -103,8 +129,14 @@ public partial struct HandleHitBufferSystem : ISystem
             var hitBuffer = hitBufferLookup[triggerEntity];
             for (var i = 0; i < hitBuffer.Length; i++)
             {
+                
                 hitBuffer.ElementAt(i).IsHandled = true;
+                hitBuffer.ElementAt(i).cooldownTimer += SystemAPI.Time.DeltaTime;
+                if(hitBuffer.ElementAt(i).cooldownTimer >= hitBuffer.ElementAt(i).cooldownDuration){
+                    hitBuffer.RemoveAt(i);
+                }
             }
+            
         }
     }
 }  

@@ -13,23 +13,20 @@ public class ConfigManaged : IComponentData
 {
     public UIController UIController;
 }
-public struct ConfigQlearnGrid : IComponentData
-{
-    public int height;
-    public int width;
+// public struct ConfigQlearnGrid : IComponentData
+// {
+//     public int height;
+//     public int width;
 
-    public float cellSize;
-}
+//     public float cellSize;
+// }
 public struct ConfigQlearn : IComponentData
 {
     public float sartingEpsilon;
     public float alpha;
     public float gamma;
-
     public Random random;
-
     public bool isInitQlearning;
-
 }
 public struct HitTriggerConfigComponent : IComponentData
 {

@@ -1,12 +1,38 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.IO;
+using Unity.Entities;
+
 
 public class UIController : MonoBehaviour
 {
     public UIDocument uiDocument; // Assign your UIDocument in the Inspector
     private VisualElement tableContainer;
     private VisualElement tableContentContainer; // Container for table content
+    private Button exportButton;
+    void OnEnable()
+    {
+        var root = GetComponent<UIDocument>().rootVisualElement;
+        exportButton = root.Q<Button>("exportButton");
+        exportButton.clicked += OnExportButtonClick;
+    }
+    void OnDisable()
+    {
+        exportButton.clicked -= OnExportButtonClick;
+    }
 
+    private void OnExportButtonClick()
+    {
+        // Create an entity with the ExportRequest component to trigger the export in the ECS system
+        var world = World.DefaultGameObjectInjectionWorld;
+        var entityManager = world.EntityManager;
+        var exportRequestEntity = entityManager.CreateEntity();
+        entityManager.AddComponentData(exportRequestEntity,new paramsExportRequestTag());
+        entityManager.AddComponentData(exportRequestEntity,new DestroyTag());
+        entityManager.SetComponentEnabled<DestroyTag>(exportRequestEntity,false);
+        Debug.Log(exportRequestEntity.Index);
+        Debug.Log("Export request created");
+    }
     private void Start()
     {
         var rootVisualElement = uiDocument.rootVisualElement;

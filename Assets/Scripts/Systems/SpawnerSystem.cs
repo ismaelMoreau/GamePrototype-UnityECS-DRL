@@ -4,17 +4,19 @@ using Unity.Collections;
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Transforms;
-using Unity.Burst.Intrinsics;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.Rendering;
 using Random = Unity.Mathematics.Random;
+using NUnit.Framework;
 
 [BurstCompile]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct OptimizedSpawnerSystem : ISystem
 {
     public void OnCreate(ref SystemState state) { 
-       
+      // state.RequireForUpdate<ConfigQlearn>();
     }
 
     public void OnDestroy(ref SystemState state) { }
@@ -23,8 +25,8 @@ public partial struct OptimizedSpawnerSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-      
-        var configQlearn =  SystemAPI.GetSingleton<ConfigQlearn>();
+        state.Enabled = false;
+        //var configQlearn =  SystemAPI.GetSingleton<ConfigQlearn>();
         foreach ((RefRW<LocalTransform> localTransform, RefRW<Spawner> spawner,Entity e) 
             in SystemAPI.Query<RefRW<LocalTransform>, RefRW<Spawner>>().WithEntityAccess())
         {
@@ -41,7 +43,7 @@ public partial struct OptimizedSpawnerSystem : ISystem
             ElapsedTime = SystemAPI.Time.ElapsedTime,
             Ecb = ecb,
             //rnd = rnd,
-            startingEpsilon = configQlearn.sartingEpsilon
+            //startingEpsilon = configQlearn.sartingEpsilon
         }.ScheduleParallel();
         state.Dependency.Complete();   
     }
@@ -62,7 +64,7 @@ public partial struct ProcessSpawnerJob : IJobEntity
     public double ElapsedTime;
 
     //public Random rnd;
-    public float startingEpsilon; 
+    //public float startingEpsilon; 
     // IJobEntity generates a component data query based on the parameters of its `Execute` method.
     // This example queries for all Spawner components and uses `ref` to specify that the operation
     // requires read and write access. Unity processes `Execute` for each entity that matches the
@@ -72,7 +74,8 @@ public partial struct ProcessSpawnerJob : IJobEntity
     {
         
         // If the next spawn time has passed.
-        if (spawner.NextSpawnTime < ElapsedTime)
+        //if (spawner.NextSpawnTime < ElapsedTime)
+        for (int i = 0; i < spawner.SpawnRate; i++)
         {
             // Spawns a new entity and positions it at the spawner.
             Entity newEntity = Ecb.Instantiate(chunkIndex, spawner.Prefab);
@@ -80,7 +83,7 @@ public partial struct ProcessSpawnerJob : IJobEntity
             Ecb.SetComponent(chunkIndex, newEntity, LocalTransform.FromPosition(spawner.SpawnPosition));
             //Ecb.SetComponent(chunkIndex, newEntity, LocalTransform.FromPositionRotation(spawner.SpawnPosition,new quaternion(new float4(-90,0,90,0))));
             //Ecb.SetComponent(chunkIndex,newEntity , new URPMaterialPropertyBaseColor { Value = RandomColor(ref rnd) });
-            Ecb.SetComponent(chunkIndex,newEntity , new EnemyEpsilonComponent{ epsilon = startingEpsilon });
+            //Ecb.SetComponent(chunkIndex,newEntity , new EnemyEpsilonComponent{ epsilon = startingEpsilon });
             // Resets the next spawn time.
             spawner.NextSpawnTime = (float)ElapsedTime + spawner.SpawnRate;
         }

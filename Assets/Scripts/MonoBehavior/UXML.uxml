@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-grow: 1;">
+        <ui:Button text="export parameters " parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="true" name="exportButton" style="height: 19px; width: 152px;" />
         <ui:VisualElement name="tableContainer" style="flex-grow: 1; height: 238px; width: 380px; max-width: 75%; max-height: 75%;" />
     </ui:VisualElement>
 </ui:UXML>

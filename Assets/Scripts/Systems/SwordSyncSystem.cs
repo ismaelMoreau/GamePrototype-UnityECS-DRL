@@ -70,9 +70,19 @@ using UnityEngine;
                         // Debug.Log("Adjusted Rotation: " + (swordTransform.rotation * rotationAdjustment).eulerAngles);
                     }
                     if(playerWeaponTag.ValueRO.playerShield){
-                        lt.ValueRW.Position = shieldTransform.position;
-                        Quaternion rotationAdjustment = Quaternion.Euler(180, 0, 180);
+                        
+                        //direction(lt.ValueRW.Position, swordTransform.position);
+                       
+                        Quaternion rotationAdjustment = Quaternion.Euler(180, 180, 180);
                         lt.ValueRW.Rotation = shieldTransform.rotation * rotationAdjustment;
+                        float offsetDistance = 0f;
+
+                        // Compute the right direction vector from the shield's rotation
+                        float3 shieldRightDirection = math.mul(shieldTransform.rotation, new float3(1, 0, 0));
+
+                        // Scale the right direction by the desired offset distance
+                        float3 offset = shieldRightDirection * offsetDistance;
+                        lt.ValueRW.Position = shieldTransform.position + (Vector3)offset;
                     }
                     
                 }

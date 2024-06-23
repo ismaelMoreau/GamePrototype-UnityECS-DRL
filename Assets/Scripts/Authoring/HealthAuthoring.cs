@@ -12,7 +12,8 @@ public class HealthAuthoring : MonoBehaviour
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             AddComponent(entity, new HealthComponent{
                 currentHealth = authoring.currentHealth,
-                maxHealth = authoring.maxHealth
+                maxHealth = authoring.maxHealth,
+                haveBeenHealed = false
             });
         }
     }

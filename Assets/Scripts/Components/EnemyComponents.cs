@@ -1,10 +1,20 @@
 using Google.Protobuf.WellKnownTypes;
 using Unity.Entities;
+using Unity.Mathematics;
 
 public struct EnemyMovementComponent : IComponentData
 {
     public float speed;
     public float jumpForce;
+
+    public bool isJumping;
+
+    public float3 JumpImpulse;
+    public bool isCooldownDashActive, isCooldownBlockActive, isCooldownHealActive, isCooldownJumpActive, isCooldownStayActive;
+    public bool isGrounded;
+    public float jumpTimeElapsed;
+
+    public float3 neareasRockPosition;
 }
 
 public struct EnemyActionComponent : IComponentData, IEnableableComponent
@@ -79,4 +89,7 @@ public struct EnemyStateComponent : IComponentData
     public float enemiesSharedReward;
 
     public float velocity;
+
+    public float nearestRockDistance;
 }
+    

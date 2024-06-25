@@ -87,20 +87,11 @@ MonoBehaviour:
   canBackward: 1
   canStepRight: 1
   canStepLeft: 1
-  canDash: 0
+  canDash: 1
   canBlock: 1
   canHeal: 0
   canJump: 0
   canStay: 0
-  playerDistance: 100
-  playerHealth: 100
-  firstNearestEnemyDistance: 100
-  secondNearestEnemyDistance: 100
-  firstEnemyHealth: 100
-  secondEnemyHealth: 100
-  playerOrientationX: 0
-  playerOrientationY: 0
-  enemiesSharedReward: 0
   cooldownDashDuration: 0
   cooldownBlockDuration: 2
   cooldownHealDuration: 3

@@ -92,19 +92,10 @@ MonoBehaviour:
   canHeal: 0
   canJump: 1
   canStay: 0
-  playerDistance: 100
-  playerHealth: 100
-  firstNearestEnemyDistance: 100
-  secondNearestEnemyDistance: 100
-  firstEnemyHealth: 100
-  secondEnemyHealth: 100
-  playerOrientationX: 0
-  playerOrientationY: 0
-  enemiesSharedReward: 0
   cooldownDashDuration: 0
   cooldownBlockDuration: 2
   cooldownHealDuration: 3
-  cooldownJumpDuration: 2
+  cooldownJumpDuration: 4
   cooldownStayDuration: 0.5
   cooldownDashTimer: 0
   cooldownBlockTimer: 0
@@ -233,7 +224,7 @@ MonoBehaviour:
     m_Friction:
       m_Override: 0
       m_Value:
-        Value: 0.5
+        Value: 0
         CombineMode: 0
     m_Restitution:
       m_Override: 0
@@ -348,7 +339,7 @@ MonoBehaviour:
     x: 0
     y: 0
     z: 0
-  m_GravityFactor: 1
+  m_GravityFactor: 2
   m_OverrideDefaultMassDistribution: 0
   m_CenterOfMass:
     x: 0

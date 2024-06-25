@@ -9,10 +9,10 @@ public class  GroundedAuthoring : MonoBehaviour
         public override void Bake(GroundedAuthoring authoring)
         {
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-            AddComponent(entity, new Grounded
-            {
-                IsGrounded = authoring.IsGrounded
-            });
+            // AddComponent(entity, new Grounded
+            // {
+            //     IsGrounded = authoring.IsGrounded
+            // });
         }
     }
 }

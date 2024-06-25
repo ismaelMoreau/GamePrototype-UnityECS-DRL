@@ -12,7 +12,7 @@ public partial struct  GroundCheckSystem : ISystem
 {
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<Grounded>();
+        state.RequireForUpdate<EnemyMovementComponent>();
        
     }
 
@@ -23,7 +23,7 @@ public partial struct  GroundCheckSystem : ISystem
     {
         var CollisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
         
-        foreach (var (grounded, localTransform) in SystemAPI.Query<RefRW<Grounded>, RefRW<LocalTransform>>())
+        foreach (var (grounded, localTransform, physicsVelocity) in SystemAPI.Query<RefRW<EnemyMovementComponent>, RefRW<LocalTransform>, RefRW<PhysicsVelocity>>())
         {
             var point = localTransform.ValueRO.Position;
             var direction = new float3(0, -0.5f, 0);
@@ -43,12 +43,15 @@ public partial struct  GroundCheckSystem : ISystem
             if (CollisionWorld.CastRay(rayInput, out Unity.Physics.RaycastHit hit))
             {
                 //UnityEngine.Debug.Log($"Hit: {hit.Position}, Distance: {hit.Fraction}");
-                localTransform.ValueRW.Position.y = hit.Position.y;
-                grounded.ValueRW.IsGrounded = true;
+                //localTransform.ValueRW.Position.y = hit.Position.y;
+
+                grounded.ValueRW.isGrounded = true;
+                // physicsVelocity.ValueRW.Linear.y = 0;
+                // physicsVelocity.ValueRW.Angular = float3.zero;
             }
             else
             {
-                grounded.ValueRW.IsGrounded = false;
+                grounded.ValueRW.isGrounded = false;
             }
         }
     }

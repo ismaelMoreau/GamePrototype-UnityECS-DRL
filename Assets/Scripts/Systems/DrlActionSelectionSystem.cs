@@ -59,14 +59,15 @@ public partial struct DrlActionSelectionSystem : ISystem
             ref EnemyStateComponent enemyState,
             in EnemyPreviousStateComponent previousState,
             ref EnemyRewardComponent enemyReward,
-            ref EnemyActionsCooldownComponent enemyActionsCooldownComponent)
+            in EnemyMovementComponent enemyMovement
+            )
         {
             if (!enemy.isDoingAction)
             {
                 NativeArray<float> actionsQvalues;
                 NeuralNetworkUtility.ForwardPass(NeuralNetworks, NeuralNetworksParameters, enemyState, out actionsQvalues);
-                var (chosenAction, actionValue) = SelectAction(enemyEpsilon.epsilon, actionsQvalues, possibleActions, enemyActionsCooldownComponent);
-
+                var (chosenAction, actionValue) = SelectAction(enemyEpsilon.epsilon, actionsQvalues, possibleActions, enemyMovement);
+                
                 DrlReplayBuffer.Add(new NeuralNetworkReplayBufferElement
                 {
                     state = previousState.previousState,
@@ -87,7 +88,7 @@ public partial struct DrlActionSelectionSystem : ISystem
             }
         }
 
-        private (int action, float value) SelectAction(float epsilon, NativeArray<float> actionsQvalues, EnemyPossibleActionComponent possibleActions,EnemyActionsCooldownComponent enemyActionsCooldown)
+        private (int action, float value) SelectAction(float epsilon, NativeArray<float> actionsQvalues, EnemyPossibleActionComponent possibleActions,EnemyMovementComponent enemyActionsCooldown)
         {
             NativeList<int> validActions = new NativeList<int>(Allocator.Temp);
 
@@ -118,7 +119,7 @@ public partial struct DrlActionSelectionSystem : ISystem
             return (chosenAction, actionValue);
         }
 
-        private bool IsActionPossible(EnemyPossibleActionComponent possibleActions,EnemyActionsCooldownComponent enemyActionsCooldown, int action)
+        private bool IsActionPossible(EnemyPossibleActionComponent possibleActions,EnemyMovementComponent enemyActionsCooldown, int action)
         {
             switch ((DrlActionSelectionSystem.EnemyActionEnum)action)
             {
@@ -131,15 +132,15 @@ public partial struct DrlActionSelectionSystem : ISystem
                 case DrlActionSelectionSystem.EnemyActionEnum.stepLeft:
                     return possibleActions.canStepLeft;
                 case DrlActionSelectionSystem.EnemyActionEnum.dash:
-                    return possibleActions.canDash && enemyActionsCooldown.cooldownDashTimer <= 0;
+                    return possibleActions.canDash && !enemyActionsCooldown.isCooldownDashActive;
                 case DrlActionSelectionSystem.EnemyActionEnum.block:
-                    return possibleActions.canBlock && enemyActionsCooldown.cooldownBlockTimer <= 0;
+                    return possibleActions.canBlock && !enemyActionsCooldown.isCooldownBlockActive;
                 case DrlActionSelectionSystem.EnemyActionEnum.heal:
-                    return possibleActions.canHeal && enemyActionsCooldown.cooldownHealTimer <= 0;
+                    return possibleActions.canHeal && !enemyActionsCooldown.isCooldownHealActive;
                 case DrlActionSelectionSystem.EnemyActionEnum.jump:
-                    return possibleActions.canJump && enemyActionsCooldown.cooldownJumpTimer <= 0;
+                    return possibleActions.canJump && !enemyActionsCooldown.isCooldownJumpActive;
                 case DrlActionSelectionSystem.EnemyActionEnum.stay:
-                    return possibleActions.canStay && enemyActionsCooldown.cooldownStayTimer <= 0;
+                    return possibleActions.canStay && !enemyActionsCooldown.isCooldownStayActive;
                 default:
                     return false;
             }

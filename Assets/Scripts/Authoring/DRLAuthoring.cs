@@ -6,7 +6,7 @@ public class ReadOnlyAttribute : PropertyAttribute { }
 public class DRLAuthoring : MonoBehaviour
 {
 
-    [ReadOnly] public int inputSize = 10;
+    [ReadOnly] public int inputSize = 11;
     public int hiddenSize = 9;
     [ReadOnly] public int outputSize = 9;
 

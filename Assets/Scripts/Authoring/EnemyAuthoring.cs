@@ -30,7 +30,13 @@ public class EnemyAuthoring : MonoBehaviour
             AddComponent(entity, new EnemyMovementComponent
             {
                 speed = authoring.speed,
-                jumpForce = authoring.jumpForce
+                jumpForce = authoring.jumpForce,
+                isGrounded = false,
+                isCooldownDashActive = false,
+                isCooldownBlockActive = false,
+                isCooldownHealActive = false,
+                isCooldownJumpActive = false,
+                isCooldownStayActive = false
             });
             AddComponent(entity,new DestroyTag{});
             SetComponentEnabled<DestroyTag>(entity, false);

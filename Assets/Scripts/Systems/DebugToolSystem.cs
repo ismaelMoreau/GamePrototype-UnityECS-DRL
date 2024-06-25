@@ -270,11 +270,12 @@ public partial struct DebugToolSystem : ISystem
         // Get the neural network parameters component
         var targetNN = SystemAPI.GetSingletonEntity<TargetNeuralNetworkParametersComponent>();
         var neuralNetworkParameters = SystemAPI.GetSingleton<NeuralNetworkParametersComponent>();
+        var neuralNetwork = SystemAPI.GetSingleton<NeuralNetworkComponent>();
         var filePath = Path.Combine(Application.persistentDataPath, "parameters.json");
         var targetNNfilePath = Path.Combine(Application.persistentDataPath, "targetNNparameters.json");
 
-        ParameterExporter.ExportParameters(neuralNetworkParameters, filePath);
-        ParameterExporter.ExportParameters(neuralNetworkParameters, targetNNfilePath);
+        ParameterExporter.ExportParameters(neuralNetworkParameters,neuralNetwork, filePath);
+        //ParameterExporter.ExportParameters(neuralNetworkParameters,neuralNetwork, targetNNfilePath);
 
         Debug.Log("Parameters exported to " + filePath);
     }

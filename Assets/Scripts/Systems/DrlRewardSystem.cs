@@ -45,12 +45,13 @@ public partial struct DrlRewardSystem : ISystem
         {
             enemiesCached.Add((entity, localTransform.ValueRO.Position, health.ValueRO.currentHealth, reward.ValueRO.earnReward, action.ValueRO.chosenAction));
         }
-        foreach (var (localTransform, enemyActionComponent, enemyReward, enemyActionTimerComponent, enemyActionsCooldown, entity) in
+        foreach (var (localTransform, enemyActionComponent, enemyReward, enemyActionTimerComponent, enemyActionsCooldown,enemyMovementComponent, entity) in
             SystemAPI.Query<RefRO<LocalTransform>,
             RefRO<EnemyActionComponent>,
             RefRW<EnemyRewardComponent>,
             RefRW<EnemyActionTimerComponent>,
-            RefRO<EnemyActionsCooldownComponent>>().WithEntityAccess())
+            RefRO<EnemyActionsCooldownComponent>,
+            RefRO<EnemyMovementComponent>>().WithEntityAccess())
         {
 
             if (enemyActionComponent.ValueRO.isDoingAction) continue;
@@ -64,8 +65,11 @@ public partial struct DrlRewardSystem : ISystem
             penalty *= proximityFactor;
             //Debug.Log("Penalty: " + penalty);
             enemyReward.ValueRW.earnReward += penalty;
-            if (enemyActionComponent.ValueRO.chosenAction == 4 ) {
-                enemyReward.ValueRW.earnReward -= 3;
+            
+            //nearestRock penalty
+            if (math.distance(enemyMovementComponent.ValueRO.neareasRockPosition, localTransform.ValueRO.Position) < 0.5) {
+                enemyReward.ValueRW.earnReward -= 1000;
+                //Debug.Log($"Nearest Rock Penalty distance: {math.distance(enemyMovementComponent.ValueRO.neareasRockPosition, localTransform.ValueRO.Position)}");
             };
 
             //heal reward

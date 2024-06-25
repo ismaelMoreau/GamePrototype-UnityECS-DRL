@@ -1,10 +1,10 @@
-# 2DBulletHeaven-UnityECS-DRL
+# GamePrototype-UnityECS-DRL
 
 ## Description du Projet
 Ce projet de stage vise à développer un jeu vidéo innovant, intégrant des techniques d'intelligence artificielle avancées grâce à l'apprentissage par renforcement (RL). Utilisant le moteur de jeu Unity et son système Entity Component System (ECS) pour optimiser les performances, le projet explore l'intégration d'agents IA dynamiques pour créer une expérience de jeu engageante et évolutive.
 
 ## Objectifs
-- Concevoir et développer un prototype de jeu similaire à Vampire Survivors, en mettant l'accent sur des mécanismes de jeu enrichis par l'IA.
+- Concevoir et développer un prototype de jeu simple, en mettant l'accent sur des mécanismes de jeu enrichis par l'IA.
 - Intégrer l'apprentissage par renforcement continu pour dynamiser le comportement des ennemis.
 - Utiliser Unity ECS pour une gestion performante des données et des entités de jeu.
 - Documenter le processus de développement et partager les apprentissages clés.

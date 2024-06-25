@@ -13,13 +13,13 @@ Ce projet de stage vise à développer un jeu vidéo innovant, intégrant des te
 - **Système d'Exploitation** : Ubuntu
 - **Moteur de Jeu** : Unity, avec une focalisation sur ECS pour la performance.
 - **Gestion de Version** : Git & GitHub pour la collaboration et le partage du code.
-- **IA et Apprentissage par Renforcement** : Utilisation de ML-Agents pour le développement et l'entraînement des modèles d'IA.
+- **IA et Apprentissage par Renforcement** : C# pur pour le développement et l'entraînement des modèles d'IA en continu en jeu.
 
 ## Installation et Configuration
-Assurez-vous d'avoir installé les dernières versions d'Ubuntu, Unity, Git, et ML-Agents. Les détails spécifiques de configuration seront fournis dans les documents de setup du projet.
+Assurez-vous d'avoir installé les dernières versions Unity 2023 avec le package Entities et ces dépendances. 
 
 ## Utilisation
-Le jeu sera jouable directement depuis Unity une fois le projet cloné et configuré. Des instructions détaillées sur la manière de lancer et tester le jeu seront incluses.
+Le jeu sera jouable directement depuis Unity une fois le projet cloné et configuré. 
 
 ## Contribution
 Ce projet est développé dans le cadre d'un stage. Toutes contributions ou feedbacks sont les bienvenus via les issues GitHub ou pull requests.

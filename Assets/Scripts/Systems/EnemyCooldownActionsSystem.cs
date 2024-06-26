@@ -7,7 +7,7 @@ public partial struct EnemyActionsCooldownSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        // No specific initialization needed
+          state.RequireForUpdate<GamePlayingTag>();
     }
 
     [BurstCompile]

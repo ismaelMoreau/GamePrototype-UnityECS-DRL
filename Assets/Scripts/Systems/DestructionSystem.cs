@@ -6,12 +6,13 @@ using Unity.Collections;
 using Unity.Burst;
 // [UpdateInGroup(typeof(SimulationSystemGroup))]
 // [UpdateAfter(typeof(EndSimulationEntityCommandBufferSystem))] // Ensure it runs after command buffers are played back
-[UpdateAfter(typeof(TransformSystemGroup))] 
+[UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct DestructionSystem : ISystem
 {
-    
-    [BurstCompile]    
-    public void OnCreate(ref SystemState state){
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
         state.RequireForUpdate<DestroyTag>();
         
     }
@@ -26,11 +27,11 @@ public partial struct DestructionSystem : ISystem
         //     if (DestroyTag.ValueRO == true)
         //     {ecb.DestroyEntity(e);}
         // }
-        
+
         // //state.EntityManager.DestroyEntity(query);
         // // You are responsible for disposing of any ECB you create.
-       
-       
+
+
         var ecb = new EntityCommandBuffer(Allocator.Temp);
         foreach (var (_, entity) in SystemAPI.Query<DestroyTag>().WithEntityAccess())
         {
@@ -45,14 +46,28 @@ public partial struct DestructionSystem : ISystem
                 }
             }
         }
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
-        
-        foreach (var (enemyHealthComponent, entity) in SystemAPI.Query<RefRO<HealthComponent>>().WithDisabled<DestroyTag>().WithEntityAccess()){
-            if (enemyHealthComponent.ValueRO.currentHealth <= 0){
-                state.EntityManager.SetComponentEnabled<DestroyTag>(entity,true);
+       
+
+        foreach (var (enemyHealthComponent, entity) in SystemAPI.Query<RefRO<HealthComponent>>().WithDisabled<DestroyTag>().WithEntityAccess())
+        {
+            if (enemyHealthComponent.ValueRO.currentHealth <= 0)
+            {
+                state.EntityManager.SetComponentEnabled<DestroyTag>(entity, true);
             }
         }
+        foreach (var (health, destroyTag, entity) in SystemAPI.Query<RefRO<HealthComponent>, RefRO<GameOverOnDestroy>>().WithEntityAccess())
+        {
+            if (health.ValueRO.currentHealth <= 0)
+            {
+                //state.EntityManager.SetComponentEnabled<DestroyTag>(entity, true);
+                //var gameOverEntity = ecb.CreateEntity();
+                ecb.AddComponent<GameOverTag>(entity);
 
+            }
+
+
+        }
+        ecb.Playback(state.EntityManager);
+        ecb.Dispose();
     }
 }

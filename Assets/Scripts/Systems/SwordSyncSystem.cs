@@ -15,6 +15,7 @@ using UnityEngine;
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<PlayerMovementComponent>();
+              state.RequireForUpdate<GamePlayingTag>();
         }
 
         public void OnUpdate(ref SystemState state)

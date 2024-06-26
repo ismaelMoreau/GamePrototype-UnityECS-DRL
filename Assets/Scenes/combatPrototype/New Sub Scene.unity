@@ -6410,6 +6410,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IsGrounded: 0
+--- !u!114 &1822545531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1822545494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07fb38880cfb3788599fe6a06af19fcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1827462763 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: dfed2e9fb3d8ac84da441095f9422543,
@@ -8782,7 +8794,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.000000010234662, y: 0.8835784, z: -0.000000019311246, w: -0.4682832}
   m_LocalPosition: {x: 4.8999996, y: 0, z: 78.5}
-  m_LocalScale: {x: 20, y: 13.508887, z: 20}
+  m_LocalScale: {x: 200, y: 13.508887, z: 200}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -9182,12 +9194,12 @@ PrefabInstance:
     - target: {fileID: -8479900091767992512, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
       propertyPath: maxHealth
-      value: 300
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: -8479900091767992512, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
       propertyPath: currentHealth
-      value: 300
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 1055919949027176432, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
@@ -9329,6 +9341,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1822545530}
+    - targetCorrespondingSourceObject: {fileID: 2558816316663948117, guid: 6a90b3096112e34aa9213d30ab7b6685,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1822545531}
   m_SourcePrefab: {fileID: 100100000, guid: 6a90b3096112e34aa9213d30ab7b6685, type: 3}
 --- !u!1001 &9021490675643427748
 PrefabInstance:

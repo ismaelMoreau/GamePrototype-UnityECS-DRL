@@ -14,6 +14,7 @@ public partial struct PlayerMouvementSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<PlayerTargetPosition>();
+          state.RequireForUpdate<GamePlayingTag>();
     }
     
     [BurstCompile]

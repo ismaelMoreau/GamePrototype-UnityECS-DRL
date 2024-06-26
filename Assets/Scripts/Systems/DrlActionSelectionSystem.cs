@@ -19,6 +19,7 @@ public partial struct DrlActionSelectionSystem : ISystem
         state.RequireForUpdate<NeuralNetworkComponent>();
         state.RequireForUpdate<NeuralNetworkParametersComponent>();
         state.RequireForUpdate<DrlConfigComponent>();
+          state.RequireForUpdate<GamePlayingTag>();
     }
     
     [BurstCompile]

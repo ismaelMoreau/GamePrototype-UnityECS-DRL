@@ -19,6 +19,7 @@ public partial struct DrlEnemyStateSystem : ISystem
     {
         state.RequireForUpdate<EnemyMovementComponent>();
         state.RequireForUpdate<PlayerMovementComponent>();
+          state.RequireForUpdate<GamePlayingTag>();
     }
 
     [BurstCompile]

@@ -17,6 +17,7 @@ public partial struct OptimizedSpawnerSystem : ISystem
 {
     public void OnCreate(ref SystemState state) { 
       // state.RequireForUpdate<ConfigQlearn>();
+        state.RequireForUpdate<GamePlayingTag>();
     }
 
     public void OnDestroy(ref SystemState state) { }

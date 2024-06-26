@@ -22,6 +22,7 @@ public partial struct DrlTrainingSystem : ISystem
         state.RequireForUpdate<NeuralNetworkParametersComponent>();
         state.RequireForUpdate<TargetNeuralNetworkParametersComponent>();
         state.RequireForUpdate<DrlConfigComponent>();
+          state.RequireForUpdate<GamePlayingTag>();
     }
     [BurstCompile]
     public void OnUpdate(ref SystemState state)

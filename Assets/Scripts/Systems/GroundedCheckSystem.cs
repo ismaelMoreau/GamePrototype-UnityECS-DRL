@@ -13,6 +13,7 @@ public partial struct  GroundCheckSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<EnemyMovementComponent>();
+          state.RequireForUpdate<GamePlayingTag>();
        
     }
 

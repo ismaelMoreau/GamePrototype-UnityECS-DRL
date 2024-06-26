@@ -15,6 +15,7 @@ public partial struct EnemyMovementSystem2 : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<EnemyMovementComponent>();
+          state.RequireForUpdate<GamePlayingTag>();
     }
 
     [BurstCompile]

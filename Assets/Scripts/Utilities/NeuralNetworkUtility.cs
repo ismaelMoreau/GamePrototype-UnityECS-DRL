@@ -103,6 +103,7 @@ public static class NeuralNetworkUtility
             7 => inputs.playerOrientationZ,
             8 => inputs.enemiesSharedReward,
             9 => inputs.velocity,
+            10 => inputs.nearestRockDistance,
             _ => 0f,
         };
     }

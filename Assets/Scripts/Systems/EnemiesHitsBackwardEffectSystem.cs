@@ -18,6 +18,7 @@ public partial struct EnemiesHitsBackwardEffectSystem : ISystem
     {
         state.RequireForUpdate<HitBufferElement>();
         state.RequireForUpdate<BackwardEffect>();
+          state.RequireForUpdate<GamePlayingTag>();
     }
     
     [BurstCompile]

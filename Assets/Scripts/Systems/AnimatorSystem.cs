@@ -157,7 +157,7 @@ partial struct AnimatorSystem : ISystem
             }
         }
 
-        foreach (var (ltw, animator, playerMouvement) in SystemAPI.Query<LocalToWorld, SystemAPI.ManagedAPI.UnityEngineComponent<Animator>, RefRW<PlayerMovementComponent>>())
+        foreach (var (ltw, animator, playerMouvement,velocity,entity) in SystemAPI.Query<LocalToWorld, SystemAPI.ManagedAPI.UnityEngineComponent<Animator>, RefRW<PlayerMovementComponent>, RefRW<PhysicsVelocity>>().WithEntityAccess())
         {
             var runFWD = Animator.StringToHash("IsRunningFoward");
             if (playerMouvement.ValueRO.isWalking)
@@ -180,6 +180,13 @@ partial struct AnimatorSystem : ISystem
             if (stateInfo.normalizedTime >= 1.0f)
             {
                 playerMouvement.ValueRW.IsAttacking = false;
+            }
+            if (state.EntityManager.HasComponent<GameOverTag>(entity))
+            {
+                velocity.ValueRW.Linear = float3.zero;
+                velocity.ValueRW.Angular = float3.zero;
+                var id = Animator.StringToHash("Die");
+                animator.Value.Play(id);
             }
         }
 

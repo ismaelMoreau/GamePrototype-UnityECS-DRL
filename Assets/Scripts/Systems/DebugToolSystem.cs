@@ -21,7 +21,7 @@ public partial struct DebugToolSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-
+        state.RequireForUpdate<GamePlayingTag>();
         // state.RequireForUpdate<PlayerMovementComponent>();
         // state.RequireForUpdate<QtableComponent>();
         // state.RequireForUpdate<ConfigQlearnGrid>();

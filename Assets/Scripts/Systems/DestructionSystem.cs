@@ -53,6 +53,8 @@ public partial struct DestructionSystem : ISystem
             if (enemyHealthComponent.ValueRO.currentHealth <= 0)
             {
                 state.EntityManager.SetComponentEnabled<DestroyTag>(entity, true);
+                var scrore = SystemAPI.GetSingletonRW<ScoreComponent>();
+                scrore.ValueRW.Value += 1;
             }
         }
         foreach (var (health, destroyTag, entity) in SystemAPI.Query<RefRO<HealthComponent>, RefRO<GameOverOnDestroy>>().WithEntityAccess())

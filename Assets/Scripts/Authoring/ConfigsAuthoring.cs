@@ -6,6 +6,8 @@ using Unity.Mathematics;
 using Random= Unity.Mathematics.Random;
 using UnityEditor.Rendering;
 using Unity.VisualScripting;
+using UnityEngine.SocialPlatforms.Impl;
+using Google.Protobuf.WellKnownTypes;
 
 public class ConfigsAuthoring : MonoBehaviour
 {   
@@ -59,7 +61,7 @@ public class ConfigsAuthoring : MonoBehaviour
                 triggerCooldownTimer = authoring.triggerCooldownTimer,
                 hitTriggerCooldownDuration = authoring.hitTriggerCooldownDuration
             });
-         
+            AddComponent(entity, new ScoreComponent{Value=0});
             
         }
     }

@@ -118,7 +118,7 @@ public partial struct DrlRewardSystem : ISystem
                         else if (trigger.ValueRO.playerShield)
                             enemyHealth.ValueRW.currentHealth -= 10;
                     }
-                    //enemyActionComponent.ValueRW.IsReadyToUpdateQtable = true;
+                    
 
 
                     if (SystemAPI.ManagedAPI.HasComponent<HealthBarUI>(hit.HitEntity))

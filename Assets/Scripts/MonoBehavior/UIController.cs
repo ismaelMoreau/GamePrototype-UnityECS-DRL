@@ -10,6 +10,19 @@ public class UIController : MonoBehaviour
     private VisualElement tableContainer;
     private VisualElement tableContentContainer; // Container for table content
     private Button exportButton;
+    private Label scoreLabel;
+    private World defaultWorld;
+
+
+    void Update()
+    {
+        if (defaultWorld != null && defaultWorld.IsCreated)
+        {
+            var scoreEntity = defaultWorld.EntityManager.CreateEntityQuery(typeof(ScoreComponent)).GetSingletonEntity();
+            var score = defaultWorld.EntityManager.GetComponentData<ScoreComponent>(scoreEntity).Value;
+            scoreLabel.text = $"Score: {score}";
+        }
+    }
     void OnEnable()
     {
         var root = GetComponent<UIDocument>().rootVisualElement;
@@ -20,7 +33,7 @@ public class UIController : MonoBehaviour
     {
         exportButton.clicked -= OnExportButtonClick;
     }
-
+    
     private void OnExportButtonClick()
     {
         // Create an entity with the ExportRequest component to trigger the export in the ECS system
@@ -37,6 +50,9 @@ public class UIController : MonoBehaviour
     {
         var rootVisualElement = uiDocument.rootVisualElement;
         tableContainer = rootVisualElement.Q<VisualElement>("tableContainer");
+
+        scoreLabel = rootVisualElement.Q<Label>("ScoreLabel");
+        defaultWorld = World.DefaultGameObjectInjectionWorld;
 
         // Create and add the table content container
         tableContentContainer = new VisualElement();

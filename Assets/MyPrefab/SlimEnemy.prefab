@@ -92,8 +92,8 @@ MonoBehaviour:
   canHeal: 0
   canJump: 1
   canStay: 0
-  cooldownDashDuration: 0
-  cooldownBlockDuration: 2
+  cooldownDashDuration: 2
+  cooldownBlockDuration: 3
   cooldownHealDuration: 3
   cooldownJumpDuration: 4
   cooldownStayDuration: 0.5

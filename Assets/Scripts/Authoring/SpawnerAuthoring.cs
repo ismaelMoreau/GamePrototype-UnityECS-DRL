@@ -4,7 +4,14 @@ using Unity.Mathematics;
 class SpawnerAuthoring : MonoBehaviour
 {
     public GameObject Prefab;
-    public float SpawnRate;
+    public float3 SpawnPosition;
+    
+    public float CurrentSpawnRate = 20f;
+    public int CurrentSpawnCount = 1;
+    public float UpgradeInterval = 30f;
+    
+    public float MinSpawnRate = 0.5f;
+    public int MaxSpawnCount = 10;
     class SpawnerBaker : Baker<SpawnerAuthoring>
     {
         public override void Bake(SpawnerAuthoring authoring)
@@ -17,7 +24,12 @@ class SpawnerAuthoring : MonoBehaviour
                 Prefab = GetEntity(authoring.Prefab, TransformUsageFlags.Dynamic),
                 SpawnPosition = authoring.transform.position,
                 NextSpawnTime = 0.0f,
-                SpawnRate = authoring.SpawnRate
+                CurrentSpawnRate = authoring.CurrentSpawnRate, 
+                CurrentSpawnCount = authoring.CurrentSpawnCount,
+                UpgradeInterval = authoring.UpgradeInterval,
+                NextUpgradeTime = 0f,
+                MinSpawnRate = authoring.MinSpawnRate,
+                MaxSpawnCount = authoring.MaxSpawnCount
             });
         }
     }

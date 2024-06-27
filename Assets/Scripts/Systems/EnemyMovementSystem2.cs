@@ -238,27 +238,26 @@ public partial struct EnemyMovementJob : IJobEntity
                         moveDirection = math.cross(math.up(), playerDirection);
                         break;
                     case 4: // Dash 
-                        if (!enemyMovementComponent.isCooldownDashActive)
-                        {
+                        //if (!enemyMovementComponent.isCooldownDashActive)
+                        //{
                             enemyMovementComponent.isCooldownDashActive = true;
                             moveDirection = playerDirection;
                             speedMultiplier = 2f;
 
-                        }
+                        //} // movements are continuous
                         break;
                     case 5: // Block 
-                        if (!enemyMovementComponent.isCooldownBlockActive)
-                        {
+                        // if (!enemyMovementComponent.isCooldownBlockActive)//not used
+                        // {
                             enemyMovementComponent.isCooldownBlockActive = true;
-                            // Block logic here
-
-                        }
+                            
+                        // }
                         break;
                     case 6: // Heal 
                         if (!enemyMovementComponent.isCooldownHealActive)
                         {
                             enemyMovementComponent.isCooldownHealActive = true;
-                            // Heal logic here
+                          
 
                         }
                         break;
@@ -284,7 +283,7 @@ public partial struct EnemyMovementJob : IJobEntity
                             // );
                            
                             enemyMovementComponent.isGrounded = false;
-                        }  // Jump logic here
+                        }  
                         break;
                     case 8: // Stay
                         if (!enemyMovementComponent.isCooldownStayActive)
@@ -296,8 +295,8 @@ public partial struct EnemyMovementJob : IJobEntity
 
                 if (math.lengthsq(moveDirection) > 0.01f && EnemyActionComponent.chosenAction != 7)
                 {
-                    //moveDirection = math.normalize(moveDirection);
-                    physicsVelocity.Linear = moveDirection * enemyMovementComponent.speed * speedMultiplier;
+                    moveDirection = math.normalize(moveDirection);
+                    localTransform.Position += moveDirection * enemyMovementComponent.speed * speedMultiplier * DeltaTime;
                 }
             }
         }

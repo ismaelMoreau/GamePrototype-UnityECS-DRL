@@ -36,10 +36,12 @@ public partial struct LifeRegenerationFountainSystem : ISystem
             {
                 // UnityEngine.Debug.Log($"Health: {healthComponent.ValueRW.currentHealth}");
                 // UnityEngine.Debug.Log($"hits: {hits.Length}");
-
-                healthComponent.ValueRW.currentHealth += 5 * SystemAPI.Time.DeltaTime;
+                if (healthComponent.ValueRW.currentHealth < healthComponent.ValueRW.maxHealth){
+                    healthComponent.ValueRW.currentHealth += 5 * SystemAPI.Time.DeltaTime;
+                    state.EntityManager.SetComponentEnabled<UpdateHealthBarUI>(entity, true);
+                } 
                 physicsVelocity.ValueRW.Linear -= 5f * SystemAPI.Time.DeltaTime;
-                state.EntityManager.SetComponentEnabled<UpdateHealthBarUI>(entity, true);
+                
 
             }
 

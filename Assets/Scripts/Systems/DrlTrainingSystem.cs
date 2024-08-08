@@ -11,6 +11,8 @@ public partial struct DrlTrainingSystem : ISystem
 {
     private Random random;
     private int stepCounter;
+    private float cumulativeReward;
+    private float runningAverageReward;
     private const int TargetUpdateInterval = 1000;
     private const int UpdateInterval = 100;
 
@@ -35,6 +37,8 @@ public partial struct DrlTrainingSystem : ISystem
         var targetNetworkParameters = SystemAPI.GetSingleton<TargetNeuralNetworkParametersComponent>();
         var config = SystemAPI.GetSingleton<DrlConfigComponent>();
 
+        var performanceMetricEntity  = SystemAPI.GetSingletonEntity<PerformanceMetricComponent>();
+        
         var miniBatchSize = math.min(replayBuffer.Length, 32);
         var miniBatch = new NativeArray<NeuralNetworkReplayBufferElement>(miniBatchSize, Allocator.TempJob);
 
@@ -68,6 +72,7 @@ public partial struct DrlTrainingSystem : ISystem
 
             indices.Dispose();
 
+            float totalLoss = 0;
             foreach (var experience in miniBatch)
             {
                 NativeArray<float> qValues;
@@ -101,19 +106,37 @@ public partial struct DrlTrainingSystem : ISystem
                 var (outputGradients, hiddenGradients) = ComputeGradients(neuralNetworksParameters, hiddenLayerOutputs, qValues, targets);
                        
                 UpdateNetworkParameters(ref neuralNetworks, ref neuralNetworksParameters, hiddenLayerOutputs, hiddenGradients, outputGradients, config.learningRate);
+                // Calculate loss
+                float loss = 0;
+                for (int i = 0; i < qValues.Length; i++)
+                {
+                    loss += math.pow(qValues[i] - targets[i], 2);
+                }
+                totalLoss += loss;
 
                 hiddenLayerOutputs.Dispose();
                 discardedArray.Dispose();
                 nextQValues.Dispose();
                 qValues.Dispose();
                 targets.Dispose();
+                
             }
 
             miniBatch.Dispose();
+            cumulativeReward += totalLoss;
+            runningAverageReward = 0.99f * runningAverageReward + 0.01f * totalLoss;
+            state.EntityManager.SetComponentData(performanceMetricEntity, new PerformanceMetricComponent
+            {
+                totalLoss = math.round(totalLoss * 100f) / 100f
+            });
         }
-     
+         
+        // Update the performance metric component
+        
         if (replayBuffer.Length >= 512)
         {
+             // Log metrics
+            //UnityEngine.Debug.Log($"Step: {stepCounter}, Cumulative Reward: {cumulativeReward}, Running Average Reward: {runningAverageReward}");
             UpdateTargetNetwork(ref state, neuralNetworksParameters, targetNetworkParameters);
             replayBuffer.Clear();
             stepCounter = 0;

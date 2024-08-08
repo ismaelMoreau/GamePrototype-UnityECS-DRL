@@ -1,7 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement style="flex-grow: 1;">
-        <ui:Button text="export parameters " parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="true" name="exportButton" style="height: 19px; width: 152px;" />
+    <ui:VisualElement style="flex-grow: 1; align-items: flex-start; justify-content: center; align-self: flex-start; flex-direction: row;">
+        <ui:Button text="export parameters " parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="true" name="exportButton" style="height: 19px; width: 152px; white-space: nowrap; -unity-text-align: middle-center;" />
     </ui:VisualElement>
+    <ui:VisualElement name="GraphContainer" style="flex-grow: 1; align-items: stretch; justify-content: flex-start; align-self: stretch; flex-direction: column; height: 22px; width: 401px; -unity-text-outline-color: rgba(56, 56, 56, 0); -unity-background-image-tint-color: rgba(213, 84, 84, 0.22); background-color: rgba(0, 0, 0, 0);" />
     <ui:VisualElement name="tableContainer" style="flex-grow: 1; height: 238px; width: 380px; max-width: 75%; max-height: 75%;" />
     <ui:Label tabindex="-1" text="Score" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ScoreLabel" style="-unity-font: url(&quot;project://database/Assets/TextMesh%20Pro/Fonts/OptimusPrinceps.ttf?fileID=12800000&amp;guid=699b2b49be5f941478e521126fa68371&amp;type=3#OptimusPrinceps&quot;); -unity-font-style: bold; font-size: 20px;" />
 </ui:UXML>

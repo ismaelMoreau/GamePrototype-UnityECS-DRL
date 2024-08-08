@@ -2634,6 +2634,7 @@ GameObject:
   m_Component:
   - component: {fileID: 655420196}
   - component: {fileID: 655420197}
+  - component: {fileID: 655420198}
   m_Layer: 5
   m_Name: healthBarPrefab
   m_TagString: Untagged
@@ -2669,6 +2670,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   HealthBarUIPrefab: {fileID: 4250531472372243314, guid: d2f6665436d905c0c972c77e2655c21b,
+    type: 3}
+--- !u!114 &655420198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 655420195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4173eebad93b280d1b19b6ba55693349, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damageUIPrefab: {fileID: 4250531472372243314, guid: b61e8ad7be1e64effa3d79e8c9740c7b,
     type: 3}
 --- !u!1001 &685529576
 PrefabInstance:
@@ -6555,6 +6570,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07fb38880cfb3788599fe6a06af19fcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1822545536
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1822545494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3717a57e10fcb9aab3ca93d44dde393, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentDamage: 0
+  damageShowTimer: 0
+  damageShowDuration: 2
+  damageUIOffset: {x: 0, y: 3, z: 0}
 --- !u!1 &1827462763 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: dfed2e9fb3d8ac84da441095f9422543,
@@ -9462,6 +9493,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1822545515}
+    - targetCorrespondingSourceObject: {fileID: 2558816316663948117, guid: 6a90b3096112e34aa9213d30ab7b6685,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1822545536}
     - targetCorrespondingSourceObject: {fileID: 2558816316663948117, guid: 6a90b3096112e34aa9213d30ab7b6685,
         type: 3}
       insertIndex: -1

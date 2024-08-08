@@ -68,7 +68,7 @@ public partial struct DrlRewardSystem : ISystem
             
             //nearestRock penalty
             if (math.distance(enemyMovementComponent.ValueRO.neareasRockPosition, localTransform.ValueRO.Position) < 0.5) {
-                enemyReward.ValueRW.earnReward -= 1000;
+                enemyReward.ValueRW.earnReward -= 10;
                 //Debug.Log($"Nearest Rock Penalty distance: {math.distance(enemyMovementComponent.ValueRO.neareasRockPosition, localTransform.ValueRO.Position)}");
             };
 
@@ -129,7 +129,10 @@ public partial struct DrlRewardSystem : ISystem
                 if (SystemAPI.HasComponent<PlayerMovementComponent>(hit.HitEntity))
                 {
                     var playerHealth = SystemAPI.GetComponentRW<HealthComponent>(hit.HitEntity);
+                    var playerDamage = SystemAPI.GetComponentRW<DamageComponent>(hit.HitEntity);
+
                     playerHealth.ValueRW.currentHealth -= 10;
+                    playerDamage.ValueRW.currentDamage += 10;
                     var enemyHealth = SystemAPI.GetComponentRW<HealthComponent>(hit.triggerEntity);
                     // var enemyActionComponent = SystemAPI.GetComponentRW<EnemyActionComponent>(hit.triggerEntity);
                     // var enemyPosition = SystemAPI.GetComponentRW<LocalTransform>(hit.triggerEntity);
@@ -155,6 +158,7 @@ public partial struct DrlRewardSystem : ISystem
 
                     SystemAPI.SetComponentEnabled<UpdateHealthBarUI>(hit.triggerEntity, true);
                     SystemAPI.SetComponentEnabled<UpdateHealthBarUI>(hit.HitEntity, true);
+                    SystemAPI.SetComponentEnabled<DamageShowUpdate>(hit.HitEntity, true);
                 }
             }
         }

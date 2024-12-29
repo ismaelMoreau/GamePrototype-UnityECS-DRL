@@ -1,198 +1,144 @@
-
-
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
-using Unity.Collections;
-using Unity.Burst;
-using Random = Unity.Mathematics.Random;
 using Unity.Physics;
-using Unity.Rendering;
-using Unity.VisualScripting;
+using Unity.Collections;
 
 [UpdateBefore(typeof(DrlActionSelectionSystem))]
 [UpdateInGroup(typeof(QlearningSystemGroup))]
 public partial struct DrlEnemyStateSystem : ISystem
 {
+    private const float MaxPlayerDistance = 200f;
+    private const float MaxHealth = 100f;
+    private const float MaxSpeed = 10f;
+    private const float RockNormalizationFactor = 10f;
+
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<EnemyMovementComponent>();
         state.RequireForUpdate<PlayerMovementComponent>();
-          state.RequireForUpdate<GamePlayingTag>();
+        state.RequireForUpdate<GamePlayingTag>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // Cache player data
         float3 playerPosition = float3.zero;
         float3 playerDirection = float3.zero;
         quaternion playerRotation = quaternion.identity;
-
+        float playerHealth = 0;
         var collisionWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
 
-        float playerHealth = 0;
-
-        foreach (var (localTransform, playerMovement, playerHealthComponent)
-            in SystemAPI.Query<RefRW<LocalTransform>, RefRO<PlayerMovementComponent>, RefRO<HealthComponent>>())
+        // Cache player data
+        foreach (var (localTransform, healthComponent) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<HealthComponent>>())
         {
             playerPosition = localTransform.ValueRO.Position;
             playerRotation = localTransform.ValueRO.Rotation;
-            playerHealth = playerHealthComponent.ValueRO.currentHealth;
+            playerHealth = healthComponent.ValueRO.currentHealth;
         }
         playerDirection = math.mul(playerRotation, new float3(0, 0, 1));
 
-
-
         // Cache enemies data
-        var enemies = new NativeList<(Entity entity, float3 position, float health, float earnReward, int action)>(Allocator.Temp);
-        foreach (var (localTransform, health, reward, action, entity)
-            in SystemAPI.Query<RefRW<LocalTransform>, RefRO<HealthComponent>, RefRO<EnemyRewardComponent>, RefRO<EnemyActionComponent>>().WithEntityAccess())
+        var enemies = new NativeList<(Entity entity, float3 position, float health, float reward)>(Allocator.Temp);
+        foreach (var (localTransform, health, reward, entity) in
+                 SystemAPI.Query<RefRW<LocalTransform>, RefRO<HealthComponent>, RefRO<EnemyRewardComponent>>().WithEntityAccess())
         {
-            enemies.Add((entity, localTransform.ValueRO.Position, health.ValueRO.currentHealth, reward.ValueRO.earnReward, action.ValueRO.chosenAction));
+            enemies.Add((entity, localTransform.ValueRO.Position, health.ValueRO.currentHealth, reward.ValueRO.earnReward));
         }
 
-        // Update each enemy's EnemyStateComponent
-        foreach (var (enemyMovement, EnemyStateComponent, previousState, enemyActionComponent, velocity,enemyMovementComponent,entity)
-            in SystemAPI.Query<RefRW<LocalTransform>, RefRW<EnemyStateComponent>, RefRW<EnemyPreviousStateComponent>, RefRO<EnemyActionComponent>, RefRO<PhysicsVelocity>,RefRW<EnemyMovementComponent>>().WithEntityAccess())
+        foreach (var (enemyTransform, stateComponent, prevStateComponent, actionComponent, velocityComponent, enemyMovement, entity) in
+                 SystemAPI.Query<RefRW<LocalTransform>, RefRW<EnemyStateComponent>, RefRW<EnemyPreviousStateComponent>, RefRO<EnemyActionComponent>, RefRO<PhysicsVelocity>, RefRW<EnemyMovementComponent>>().WithEntityAccess())
         {
-            if (enemyActionComponent.ValueRO.isDoingAction) { continue; };
+            if (actionComponent.ValueRO.isDoingAction)
+                continue;
 
-            previousState.ValueRW.previousState = EnemyStateComponent.ValueRO;
-            float3 enemyPosition = enemyMovement.ValueRW.Position;
+            prevStateComponent.ValueRW.previousState = stateComponent.ValueRO;
 
-            // Calculate distance to player
-            EnemyStateComponent.ValueRW.playerDistance = math.min(200, math.distance(playerPosition, enemyPosition)) / 200;
-            EnemyStateComponent.ValueRW.playerHealth = math.min(playerHealth / 100, 0f);
-            EnemyStateComponent.ValueRW.playerOrientationX = playerDirection.x;
-            EnemyStateComponent.ValueRW.playerOrientationZ = playerDirection.z;
-            EnemyStateComponent.ValueRW.ownPositionX = enemyMovement.ValueRW.Position.x/200;
-            EnemyStateComponent.ValueRW.ownPositionY = enemyMovement.ValueRW.Position.y/200;
-            const float maxSpeed = 10f;
-            EnemyStateComponent.ValueRW.velocity = math.clamp(math.length(velocity.ValueRO.Linear) / maxSpeed, 0f, 1f);
+            float3 enemyPosition = enemyTransform.ValueRW.Position;
 
+            // Normalize state values
+            stateComponent.ValueRW.playerDistance = math.clamp(math.distance(playerPosition, enemyPosition) / MaxPlayerDistance, 0f, 1f);
+            stateComponent.ValueRW.playerHealth = math.clamp(playerHealth / MaxHealth, 0f, 1f);
+            stateComponent.ValueRW.ownPositionX = math.clamp(enemyPosition.x / MaxPlayerDistance, 0f, 1f);
+            stateComponent.ValueRW.ownPositionY = math.clamp(enemyPosition.y / MaxPlayerDistance, 0f, 1f);
+            stateComponent.ValueRW.velocity = math.clamp(math.length(velocityComponent.ValueRO.Linear) / MaxSpeed, 0f, 1f);
+            stateComponent.ValueRW.playerOrientationX = playerDirection.x;
+            stateComponent.ValueRW.playerOrientationZ = playerDirection.z;
 
-            // Find the two nearest enemies
-            float nearestDistance1 = float.MaxValue;
-            float nearestDistance2 = float.MaxValue;
-            Entity nearestEnemy1 = Entity.Null;
-            Entity nearestEnemy2 = Entity.Null;
-            float firstEnemyHealth = 0;
-            float firstEnemyearnReward = 0;
-            float secondEnemyHealth = 0;
-            float secondEnemyearnReward = 0;
-            foreach (var enemy in enemies)
-            {
-                if (enemy.entity == entity)
-                    continue;
-
-                float distance = math.distance(enemyPosition, enemy.position);
-                if (distance < nearestDistance1)
-                {
-                    nearestDistance2 = nearestDistance1;
-                    nearestEnemy2 = nearestEnemy1;
-
-                    nearestDistance1 = distance;
-                    nearestEnemy1 = enemy.entity;
-
-                    firstEnemyHealth = enemy.health;
-                    firstEnemyearnReward = enemy.earnReward;
-
-
-                }
-                else if (distance < nearestDistance2)
-                {
-                    nearestDistance2 = distance;
-                    nearestEnemy2 = enemy.entity;
-
-                    secondEnemyHealth = enemy.health;
-                    secondEnemyearnReward = enemy.earnReward;
-                }
-            }
-            float sharedReward = 0f;
-            // Update nearest enemies info
-            if (nearestEnemy1 != Entity.Null)
-            {
-                //EnemyStateComponent.ValueRW.firstNearestEnemyDistance = math.min(100,nearestDistance1)/100;
-                EnemyStateComponent.ValueRW.firstEnemyHealth = firstEnemyHealth / 100;
-                //EnemyStateComponent.ValueRW.firstEnemyAction = nearestEnemy1Action.chosenAction;
-                sharedReward += firstEnemyearnReward;
-            }
-            else
-            {
-                //EnemyStateComponent.ValueRW.firstNearestEnemyDistance = 0;
-                EnemyStateComponent.ValueRW.firstEnemyHealth = 0;
-                //EnemyStateComponent.ValueRW.firstEnemyAction = 0;
-            }
-
-            if (nearestEnemy2 != Entity.Null)
-            {
-
-                //EnemyStateComponent.ValueRW.secondNearestEnemyDistance = math.min(100,nearestDistance2)/100;
-                EnemyStateComponent.ValueRW.secondEnemyHealth = secondEnemyHealth / 100;
-                sharedReward += secondEnemyearnReward;
-                //EnemyStateComponent.ValueRW.secondEnemyAction = nearestEnemy2Action.chosenAction;
-            }
-            else
-            {
-                //EnemyStateComponent.ValueRW.secondNearestEnemyDistance = 0;
-                EnemyStateComponent.ValueRW.secondEnemyHealth = 0;
-                //EnemyStateComponent.ValueRW.secondEnemyAction = 0;
-            }
-
-            if (sharedReward != 0)
-            {
-                EnemyStateComponent.ValueRW.enemiesSharedReward = sharedReward / 3;
-            }
-            // Optionally, update enemiesSharedReward if needed
-            EnemyStateComponent.ValueRW.enemiesSharedReward = CalculateEnemiesSharedReward();
-
-            float searchRadius = 10f; // Adjust this value as needed
-            NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
-
-            if (collisionWorld.OverlapSphere(enemyMovement.ValueRW.Position, searchRadius, ref hits, new CollisionFilter
-            {
-                BelongsTo = ~0u,
-                CollidesWith = 1 << 10, // Assuming rocks are on layer 8, adjust if needed
-                GroupIndex = 0
-            }))
-            {
-                float nearestDistance = float.MaxValue;
-                float3 nearestRockPosition = float3.zero;
-
-                for (int i = 0; i < hits.Length; i++)
-                {
-                    // if (hits[i].Entity.HasComponent<RockTagComponent>()) // Assuming you have a RockTagComponent
-                    // {
-                    float distance = math.distance(enemyPosition, hits[i].Position);
-                    if (distance < nearestDistance)
-                    {
-                        nearestDistance = distance;
-                        nearestRockPosition = hits[i].Position;
-                        //Debug.Log("Rock Position: " + nearestRockPosition);
-                    }
-                    enemyMovementComponent.ValueRW.neareasRockPosition = nearestRockPosition;
-
-                }
-
-                EnemyStateComponent.ValueRW.nearestRockDistance = nearestDistance/10;// normalise the distance
-            }
-            else
-            {
-                EnemyStateComponent.ValueRW.nearestRockDistance = 1f;
-            }
-
-            hits.Dispose();
-
-           
-
+            UpdateNearestEnemies(enemies, entity, enemyPosition, ref stateComponent.ValueRW);
+            UpdateNearestRock(collisionWorld, enemyPosition, ref enemyMovement.ValueRW, ref stateComponent.ValueRW);
         }
+
         enemies.Dispose();
     }
-    private float CalculateEnemiesSharedReward()
+
+    private void UpdateNearestEnemies(NativeList<(Entity entity, float3 position, float health, float reward)> enemies, Entity self, float3 position, ref EnemyStateComponent state)
     {
-        // Implement your logic to calculate the shared reward for enemies
-        return 0f;
+        float nearestDistance1 = float.MaxValue;
+        float nearestDistance2 = float.MaxValue;
+        float firstEnemyHealth = 0;
+        float firstEnemyReward = 0;
+        float secondEnemyHealth = 0;
+        float secondEnemyReward = 0;
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy.entity == self) continue;
+
+            float distance = math.distance(position, enemy.position);
+            if (distance < nearestDistance1)
+            {
+                nearestDistance2 = nearestDistance1;
+                secondEnemyHealth = firstEnemyHealth;
+                secondEnemyReward = firstEnemyReward;
+
+                nearestDistance1 = distance;
+                firstEnemyHealth = enemy.health;
+                firstEnemyReward = enemy.reward;
+            }
+            else if (distance < nearestDistance2)
+            {
+                nearestDistance2 = distance;
+                secondEnemyHealth = enemy.health;
+                secondEnemyReward = enemy.reward;
+            }
+        }
+
+        state.firstEnemyHealth = math.clamp(firstEnemyHealth / MaxHealth, 0f, 1f);
+        state.secondEnemyHealth = math.clamp(secondEnemyHealth / MaxHealth, 0f, 1f);
+        state.enemiesSharedReward = math.clamp((firstEnemyReward + secondEnemyReward) / 3f, 0f, 1f);
+    }
+
+    private void UpdateNearestRock(CollisionWorld collisionWorld, float3 position, ref EnemyMovementComponent movement, ref EnemyStateComponent state)
+    {
+        float searchRadius = 10f;
+        NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
+
+        if (collisionWorld.OverlapSphere(position, searchRadius, ref hits, new CollisionFilter
+        {
+            BelongsTo = ~0u,
+            CollidesWith = 1 << 10,
+            GroupIndex = 0
+        }))
+        {
+            float nearestDistance = float.MaxValue;
+            foreach (var hit in hits)
+            {
+                float distance = math.distance(position, hit.Position);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    movement.neareasRockPosition = hit.Position;
+                }
+            }
+            state.nearestRockDistance = math.clamp(nearestDistance / RockNormalizationFactor, 0f, 1f);
+        }
+        else
+        {
+            state.nearestRockDistance = 1f;
+        }
+
+        hits.Dispose();
     }
 }

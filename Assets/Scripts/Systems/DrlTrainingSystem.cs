@@ -6,14 +6,13 @@ using Unity.Mathematics;
 using Random = Unity.Mathematics.Random;
 
 [UpdateInGroup(typeof(QlearningSystemGroup), OrderLast = true)]
-
 public partial struct DrlTrainingSystem : ISystem
 {
     private Random random;
     private int stepCounter;
     private float cumulativeReward;
     private float runningAverageReward;
-    private const int TargetUpdateInterval = 1000;
+    private const int TargetUpdateInterval = 500;
     private const int UpdateInterval = 100;
 
     public void OnCreate(ref SystemState state)
@@ -37,7 +36,7 @@ public partial struct DrlTrainingSystem : ISystem
         var targetNetworkParameters = SystemAPI.GetSingleton<TargetNeuralNetworkParametersComponent>();
         var config = SystemAPI.GetSingleton<DrlConfigComponent>();
 
-        var performanceMetricEntity  = SystemAPI.GetSingletonEntity<PerformanceMetricComponent>();
+        var performanceMetricEntity  = SystemAPI.GetSingletonEntity<LossMetricComponent>();
         
         var miniBatchSize = math.min(replayBuffer.Length, 32);
         var miniBatch = new NativeArray<NeuralNetworkReplayBufferElement>(miniBatchSize, Allocator.TempJob);
@@ -105,14 +104,14 @@ public partial struct DrlTrainingSystem : ISystem
 
                 var (outputGradients, hiddenGradients) = ComputeGradients(neuralNetworksParameters, hiddenLayerOutputs, qValues, targets);
                        
-                UpdateNetworkParameters(ref neuralNetworks, ref neuralNetworksParameters, hiddenLayerOutputs, hiddenGradients, outputGradients, config.learningRate);
+                UpdateNetworkParametersL2(ref neuralNetworks, ref neuralNetworksParameters, hiddenLayerOutputs, hiddenGradients, outputGradients, config.learningRate);
                 // Calculate loss
                 float loss = 0;
                 for (int i = 0; i < qValues.Length; i++)
                 {
                     loss += math.pow(qValues[i] - targets[i], 2);
                 }
-                totalLoss += loss;
+                totalLoss += loss/miniBatchSize;
 
                 hiddenLayerOutputs.Dispose();
                 discardedArray.Dispose();
@@ -125,10 +124,12 @@ public partial struct DrlTrainingSystem : ISystem
             miniBatch.Dispose();
             cumulativeReward += totalLoss;
             runningAverageReward = 0.99f * runningAverageReward + 0.01f * totalLoss;
-            state.EntityManager.SetComponentData(performanceMetricEntity, new PerformanceMetricComponent
+            state.EntityManager.SetComponentData(performanceMetricEntity, new LossMetricComponent
             {
                 totalLoss = math.round(totalLoss * 100f) / 100f
             });
+            //UnityEngine.Debug.Log($"Calculated Loss: {totalLoss}");
+
         }
          
         // Update the performance metric component
@@ -163,7 +164,7 @@ public partial struct DrlTrainingSystem : ISystem
             hiddenGradients[i] = error * hiddenLayerOutputs[i] * (1 - hiddenLayerOutputs[i]);
         }
         // Clip gradients
-    float gradientClipValue = 1.0f; // Set this to the desired maximum gradient value
+        float gradientClipValue = 0.5f; // Set this to the desired maximum gradient value
         for (int i = 0; i < outputGradients.Length; i++)
         {
             outputGradients[i] = math.clamp(outputGradients[i], -gradientClipValue, gradientClipValue);
@@ -204,6 +205,56 @@ public partial struct DrlTrainingSystem : ISystem
         hiddenGradients.Dispose();
         outputGradients.Dispose();
     }
+    [BurstCompile]
+private void UpdateNetworkParametersL2(
+    ref NeuralNetworkComponent neuralNetwork,
+    ref NeuralNetworkParametersComponent parameters,
+    NativeArray<float> hiddenLayerOutputs,
+    NativeArray<float> hiddenGradients,
+    NativeArray<float> outputGradients,
+    float learningRate)
+{
+    float weightDecay = 0.0001f; // Regularization strength
+    float gradientClipValue = 1.0f; // Maximum gradient value
+
+    // Update input weights with weight decay and gradient clipping
+    for (int i = 0; i < parameters.inputWeights.Length; i++)
+    {
+        int row = i / neuralNetwork.inputSize;
+        int col = i % neuralNetwork.inputSize;
+
+        float gradient = hiddenGradients[row] * parameters.inputWeights[col];
+        gradient = math.clamp(gradient, -gradientClipValue, gradientClipValue);
+
+        parameters.inputWeights[i] -= learningRate * (gradient + weightDecay * parameters.inputWeights[i]);
+    }
+
+    // Update hidden weights with weight decay and gradient clipping
+    for (int i = 0; i < parameters.hiddenWeights.Length; i++)
+    {
+        int row = i / hiddenLayerOutputs.Length;
+        int col = i % hiddenLayerOutputs.Length;
+
+        float gradient = outputGradients[row] * hiddenLayerOutputs[col];
+        gradient = math.clamp(gradient, -gradientClipValue, gradientClipValue);
+
+        parameters.hiddenWeights[i] -= learningRate * (gradient + weightDecay * parameters.hiddenWeights[i]);
+    }
+
+    // Update biases
+    for (int i = 0; i < parameters.outputBiases.Length; i++)
+    {
+        parameters.outputBiases[i] -= learningRate * outputGradients[i];
+    }
+    for (int i = 0; i < parameters.hiddenBiases.Length; i++)
+    {
+        parameters.hiddenBiases[i] -= learningRate * hiddenGradients[i];
+    }
+
+    hiddenGradients.Dispose();
+    outputGradients.Dispose();
+}
+
     [BurstCompile]
     private void UpdateTargetNetwork(ref SystemState state, NeuralNetworkParametersComponent sourceParameters, TargetNeuralNetworkParametersComponent targetParameters)
     {

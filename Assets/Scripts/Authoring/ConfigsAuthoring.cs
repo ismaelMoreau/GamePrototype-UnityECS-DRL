@@ -7,7 +7,7 @@ using Random= Unity.Mathematics.Random;
 using UnityEditor.Rendering;
 using Unity.VisualScripting;
 using UnityEngine.SocialPlatforms.Impl;
-using Google.Protobuf.WellKnownTypes;
+
 
 public class ConfigsAuthoring : MonoBehaviour
 {   

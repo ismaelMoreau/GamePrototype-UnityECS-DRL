@@ -134,9 +134,9 @@ namespace FIMSpace.GroundFitter
                         {
                             if (pm_Sliding == null)
                             {
-                                pm_Sliding = new PhysicMaterial("Sliding");
+                                pm_Sliding = new PhysicsMaterial("Sliding");
                                 pm_Sliding.bounciness = 0f;
-                                pm_Sliding.frictionCombine = PhysicMaterialCombine.Minimum;
+                                pm_Sliding.frictionCombine = PhysicsMaterialCombine.Minimum;
                                 pm_Sliding.dynamicFriction = 0f;
                                 pm_Sliding.staticFriction = 0f;
                             }
@@ -454,7 +454,7 @@ namespace FIMSpace.GroundFitter
                     //yAdjustPos = null;
                 }
 
-                rigb.velocity = new Vector3(lastVelocity.x, yVelo, lastVelocity.z);
+                rigb.linearVelocity = new Vector3(lastVelocity.x, yVelo, lastVelocity.z);
             }
             else
                 transform.position = holdJumpPosition;
@@ -546,7 +546,7 @@ namespace FIMSpace.GroundFitter
         [Tooltip("If using physical move with collider, assigning to the collider sliding material")]
         [HideInInspector] public bool UseSlidingMat = true;
 
-        private static PhysicMaterial pm_Sliding = null;
+        private static PhysicsMaterial pm_Sliding = null;
     }
 
 

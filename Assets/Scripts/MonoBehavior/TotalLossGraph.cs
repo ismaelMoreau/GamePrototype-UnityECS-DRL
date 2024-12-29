@@ -12,8 +12,7 @@ public class TotalLossGraph : MonoBehaviour
     public TMP_Text[] scaleTexts;
     public string title = "Performance Graph";
     public int maxPoints = 100;
-    public float xSpacing = 10.0f;
-    public float yScale = 1f;
+
 
     private List<float> totalLoss = new List<float>();
 
@@ -24,58 +23,72 @@ public class TotalLossGraph : MonoBehaviour
 
         // Set the title
         titleText.text = title;
-
     }
 
-    void Update()
+   void Update()
     {
         var entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        var performanceMetricEntity = entityManager.CreateEntityQuery(typeof(PerformanceMetricComponent)).GetSingletonEntity();
-        var performanceMetric = entityManager.GetComponentData<PerformanceMetricComponent>(performanceMetricEntity);
+        var performanceMetricEntity = entityManager.CreateEntityQuery(typeof(LossMetricComponent)).GetSingletonEntity();
+        var performanceMetric = entityManager.GetComponentData<LossMetricComponent>(performanceMetricEntity);
 
-        // Add the latest cumulative reward to the list
-        if(performanceMetric.totalLoss != 0){
-            totalLoss.Add(performanceMetric.totalLoss);
+        float rawLoss = performanceMetric.totalLoss;
+
+        // Update the smoothed loss
+        float smoothedLoss = rawLoss;
+        if (totalLoss.Count > 0)
+        {
+            smoothedLoss = 0.9f * totalLoss[^1] + 0.1f * rawLoss;
         }
 
-        // Maintain the maximum number of points
+        totalLoss.Add(smoothedLoss);
+
         if (totalLoss.Count > maxPoints)
         {
             totalLoss.RemoveAt(0);
         }
+ 
 
-        // Update the UILineRenderer with the new points
-        uiLineRenderer.Points.Clear();
-       
+        //Debug.Log($"Graph Range: Max = {maxTotalLoss}, Min = {minTotalLoss}, Panel Height = {panelRectTransform.rect.height}");
 
-        float maxtotalLoss = Mathf.Max(totalLoss.ToArray());
-        float mintotalLoss = Mathf.Min(totalLoss.ToArray());
-      
-        for (int i = 0; i < totalLoss.Count; i++)
-        {
-            float x = i * xSpacing;
-            float y = totalLoss[i] * yScale;
-            
-            uiLineRenderer.Points.Add(new Vector2(x, y));
-        }
-        uiLineRenderer.SetVerticesDirty();
-
-        // Update scale texts
-        UpdateScaleTexts(maxtotalLoss,mintotalLoss);
-
-        
+        UpdateGraph(uiLineRenderer, totalLoss, panelRectTransform);
+        UpdateScaleTexts();
     }
-
-    void UpdateScaleTexts(float maxValue, float minValue)
+    void UpdateGraph(UILineRenderer lineRenderer, List<float> values, RectTransform panelRect)
     {
-      
-        scaleTexts[0].text = $"max :{maxValue.ToString("F1")}";
-        
-        scaleTexts[1].text = "0";
-        
-        scaleTexts[2].text = $"min :{minValue.ToString("F1")}";
-        
+        lineRenderer.Points.Clear();
+
+        float maxValue = Mathf.Max(values.ToArray());
+        float minValue = Mathf.Min(values.ToArray());
+
+        // Prevent division by zero if all values are the same
+        if (Mathf.Approximately(maxValue, minValue))
+        {
+            maxValue += 1f; // Add a small delta to create a visible range
+        }
+
+        float panelWidth = panelRect.rect.width;
+        float panelHeight = panelRect.rect.height;
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            float normalizedX = i / (float)(values.Count - 1);
+            float normalizedY = (values[i] - minValue) / (maxValue - minValue);
+
+            float x = panelWidth * normalizedX;
+            float y = panelHeight * normalizedY;
+
+            lineRenderer.Points.Add(new Vector2(x, y));
+        }
+
+        lineRenderer.SetVerticesDirty();
     }
+    void UpdateScaleTexts()
+    {
+        float maxTotalLoss = Mathf.Max(totalLoss.ToArray());
+        float minTotalLoss = Mathf.Min(totalLoss.ToArray());
 
-
+        scaleTexts[0].text = $"max :{maxTotalLoss.ToString("F1")}";
+        scaleTexts[1].text = "0";
+        scaleTexts[2].text = $"min :{minTotalLoss.ToString("F1")}";
+    }
 }

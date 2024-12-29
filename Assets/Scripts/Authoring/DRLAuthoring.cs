@@ -28,7 +28,7 @@ public class DRLAuthoring : MonoBehaviour
             // });
             AddComponent(entity, new DrlConfigComponent
             {
-                learningRate = 0.1f,
+                learningRate = 0.001f,
                 discountFactor = 0.9f
             });
             // AddComponent(entity,new QvalueComponent{

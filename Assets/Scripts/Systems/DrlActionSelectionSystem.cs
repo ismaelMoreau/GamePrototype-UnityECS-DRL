@@ -73,7 +73,7 @@ public partial struct DrlActionSelectionSystem : ISystem
                 {
                     state = previousState.previousState,
                     action = chosenAction,
-                    reward = enemyReward.earnReward,
+                    reward =  math.clamp(enemyReward.earnReward, -100f, 100f),//TEST 
                     nextState = enemyState,
                     done = false
                 });
@@ -82,7 +82,8 @@ public partial struct DrlActionSelectionSystem : ISystem
                 
                 enemy.chosenAction = chosenAction;
                 enemy.numberOfSteps = math.min(enemy.numberOfSteps + 1, 100);
-                enemyEpsilon.epsilon = math.max(enemyEpsilon.epsilon - 0.001f, 0.01f);// Linear epsilon decay
+                //enemyEpsilon.epsilon = math.max(enemyEpsilon.epsilon - 0.0005f, 0.01f);// Linear epsilon decay
+                enemyEpsilon.epsilon = math.max(enemyEpsilon.epsilon * 0.995f, 0.1f);//exponential decay
                 enemy.isDoingAction = true;
 
                 enemyActiontimer.actionDuration = 1f; // Adjust based on chosen action

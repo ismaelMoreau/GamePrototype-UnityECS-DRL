@@ -7,7 +7,8 @@ public partial struct PerformanceMetricSystem : ISystem
 {
        public void OnCreate(ref SystemState state)
     {
-       state.EntityManager.CreateEntity(typeof(PerformanceMetricComponent));
+       state.EntityManager.CreateEntity(typeof(RewardMetricComponent));
+       state.EntityManager.CreateEntity(typeof(LossMetricComponent));
     }
 
     public void OnUpdate(ref SystemState state)
@@ -27,9 +28,9 @@ public partial struct PerformanceMetricSystem : ISystem
         }
 
         
-        var performanceMetricEntity  = SystemAPI.GetSingletonEntity<PerformanceMetricComponent>();
+        var performanceMetricEntity  = SystemAPI.GetSingletonEntity<RewardMetricComponent>();
         // Update the performance metric component
-        state.EntityManager.SetComponentData(performanceMetricEntity, new PerformanceMetricComponent
+        state.EntityManager.SetComponentData(performanceMetricEntity, new RewardMetricComponent
         {
             Time = (float)currentTime,
             EntityCount = totalEnemies,
@@ -37,10 +38,5 @@ public partial struct PerformanceMetricSystem : ISystem
         });
     }
 }
-public struct PerformanceMetricComponent : IComponentData
-{
-    public float Time;
-    public int EntityCount;
-    public float TotalCumulativeReward;
-    public float totalLoss;
-}
+
+

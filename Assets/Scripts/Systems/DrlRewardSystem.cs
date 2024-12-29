@@ -8,7 +8,7 @@ using Random = Unity.Mathematics.Random;
 using Unity.Physics;
 using Unity.Rendering;
 using Unity.VisualScripting;
-using Unity.Barracuda;
+
 
 [UpdateBefore(typeof(DrlEnemyStateSystem))]
 [UpdateInGroup(typeof(QlearningSystemGroup))]
@@ -27,7 +27,7 @@ public partial struct DrlRewardSystem : ISystem
     {
 
 
-
+        float deltaTime = SystemAPI.Time.DeltaTime;
         float3 playerPosition = new float3(0, 0, 0);
         quaternion playerRotation = quaternion.identity;
 
@@ -56,7 +56,7 @@ public partial struct DrlRewardSystem : ISystem
 
             if (enemyActionComponent.ValueRO.isDoingAction) continue;
             var Distance = math.distance(playerPosition, localTransform.ValueRO.Position);
-            var penalty = enemyActionComponent.ValueRO.numberOfSteps * -0.3f;
+            var penalty = enemyActionComponent.ValueRO.numberOfSteps * -0.1f;
             
             //Reduce the penalty based on the distance
             var maxDistance = 50.0f;
@@ -64,11 +64,11 @@ public partial struct DrlRewardSystem : ISystem
             var proximityFactor = math.pow(distanceFactor, 2);  // Quadratic fall-off
             penalty *= proximityFactor;
             //Debug.Log("Penalty: " + penalty);
-            enemyReward.ValueRW.earnReward += penalty;
+            enemyReward.ValueRW.earnReward += penalty ;
             
             //nearestRock penalty
             if (math.distance(enemyMovementComponent.ValueRO.neareasRockPosition, localTransform.ValueRO.Position) < 0.5) {
-                enemyReward.ValueRW.earnReward -= 10;
+                enemyReward.ValueRW.earnReward -= 5 ;
                 //Debug.Log($"Nearest Rock Penalty distance: {math.distance(enemyMovementComponent.ValueRO.neareasRockPosition, localTransform.ValueRO.Position)}");
             };
 
@@ -86,7 +86,7 @@ public partial struct DrlRewardSystem : ISystem
                 if (health.ValueRO.currentHealth < 100)
                 {
                     health.ValueRW.currentHealth += 15;//TODO: buffer for damage and healing
-                    enemyReward.ValueRW.earnReward += 5;
+                    enemyReward.ValueRW.earnReward += 10 ;
                     SystemAPI.SetComponentEnabled<UpdateHealthBarUI>(enemy.entity, true);
                 }
             }
@@ -108,7 +108,7 @@ public partial struct DrlRewardSystem : ISystem
 
                     if (enemyActionComponent.ValueRO.chosenAction == 5)//blocked
                     {
-                        enemyReward.ValueRW.earnReward += 40;
+                        enemyReward.ValueRW.earnReward += 20;
                     }
                     else
                     {
@@ -150,7 +150,8 @@ public partial struct DrlRewardSystem : ISystem
                     // }
                     // else
                     // {
-                    enemyReward.ValueRW.earnReward = 100;
+                    enemyReward.ValueRW.earnReward = math.clamp(100 - playerHealth.ValueRO.currentHealth, 10, 100); // Scales reward with player's health
+
                     //}
 
                     //.ValueRW.IsReadyToUpdateQtable = true;
